@@ -183,14 +183,18 @@ export default async function AgentPage({ params }: AgentPageProps) {
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">Website</dt>
                 <dd className="mt-1">
-                  <a
-                    href={agent.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-zinc-700 hover:underline"
-                  >
-                    {agent.website_url?.replace(/https?:\/\//, "") || "N/A"}
-                  </a>
+                  {agent.website_url ? (
+                    <a
+                      href={agent.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-zinc-700 hover:underline"
+                    >
+                      {agent.website_url.replace(/https?:\/\//, "")}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-zinc-400">N/A</span>
+                  )}
                 </dd>
               </div>
               <div>
