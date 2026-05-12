@@ -8,15 +8,8 @@ import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 
-// Static params: prerender agent platforms
-export async function generateStaticParams() {
-  const { data } = await supabaseAdmin
-    .from("agent_platforms")
-    .select("slug")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-  return (data ?? []).map(({ slug }) => ({ slug }))
-}
+// Force SSR: don't pre-render at build time (avoids Supabase connection during build)
+export const dynamic = 'force-dynamic'
 
 // SEO Metadata
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
