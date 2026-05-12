@@ -10,7 +10,7 @@ import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 
 interface AgentPageProps {
-  params: Promise<{ slug: string }>
+  params: { slug: string }
 }
 
 // ── Static params: prerender agent platforms ─────────────────────────────
@@ -25,7 +25,7 @@ export async function generateStaticParams() {
 
 // ── SEO Metadata ──────────────────────────────────────────────────────
 export async function generateMetadata({ params }: AgentPageProps): Promise<Metadata> {
-  const { slug } = await params
+  const { slug } = params
   const supabase = await createClient()
   const { data: agent } = await supabase
     .from("agent_platforms")
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: AgentPageProps): Promise<Meta
 
 // ── Page Component ────────────────────────────────────────────────────
 export default async function AgentPage({ params }: AgentPageProps) {
-  const { slug } = await params
+  const { slug } = params
   const supabase = await createClient()
 
   const { data: agent } = await supabase
