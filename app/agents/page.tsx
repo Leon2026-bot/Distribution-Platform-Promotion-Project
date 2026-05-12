@@ -8,6 +8,8 @@ import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Best Taobao Agents 2026 – Compared & Reviewed | Finds Engine",
   description:
