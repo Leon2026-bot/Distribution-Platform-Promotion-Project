@@ -10,6 +10,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 // Force SSR: don't pre-render at build time (avoids Supabase connection during build)
 export const dynamic = 'force-dynamic'
 
+// Disable all caching (Vercel CDN + browser) to prevent stale 404 responses
+export const fetchCache = 'force-no-store'
+
 export const metadata: Metadata = {
   title: "Best Taobao Agents 2026 – Compared & Reviewed | Finds Engine",
   description:

@@ -11,6 +11,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 // Force SSR: don't pre-render at build time (avoids Supabase connection during build)
 export const dynamic = 'force-dynamic'
 
+// Disable all caching (Vercel CDN + browser) to prevent stale 404 responses
+export const fetchCache = 'force-no-store'
+
 // SEO Metadata
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const { slug } = params
