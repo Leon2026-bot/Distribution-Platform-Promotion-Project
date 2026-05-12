@@ -7,18 +7,6 @@ import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 
-// Force SSR: don't pre-render at build time (avoids Supabase connection during build)
-export const dynamic = 'force-dynamic'
-
-// Explicitly opt out of all caching (Vercel CDN + browser + fetch)
-export const revalidate = 0
-export const fetchCache = 'force-no-store'
-
-// Prevent Next.js from trying to prerender this page during build
-export function generateStaticParams() {
-  return []
-}
-
 export const metadata: Metadata = {
   title: "Best Taobao Agents 2026 – Compared & Reviewed | Finds Engine",
   description:
