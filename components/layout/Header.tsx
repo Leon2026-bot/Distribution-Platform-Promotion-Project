@@ -19,7 +19,7 @@ const navLinks = [
     { label: "Brands", href: "/brands" },
     { label: "Categories", href: "/categories" },
   ]},
-  { label: "Agents", href: "/agents" },
+  { label: "Agents", href: "/partners" },
   { label: "Blog", href: "/blog" },
 ]
 

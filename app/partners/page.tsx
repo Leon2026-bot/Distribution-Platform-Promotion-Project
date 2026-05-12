@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "Best Taobao Agents 2026 – Compared & Reviewed | Finds Engine",
   description:
     "Compare the best Taobao and 1688 agents in 2026. Kakobuy, CNFans, Fishgoo and more — fees, QC, shipping, and payment methods reviewed side by side.",
-  alternates: { canonical: `${SITE_URL}/agents` },
+  alternates: { canonical: `${SITE_URL}/partners` },
 }
 
 export default async function AgentsPage() {
@@ -33,7 +33,7 @@ export default async function AgentsPage() {
       <SchemaBreadcrumb
         items={[
           { name: "Home", url: SITE_URL },
-          { name: "Agents", url: `${SITE_URL}/agents` },
+          { name: "Agents", url: `${SITE_URL}/partners` },
         ]}
       />
 
@@ -73,7 +73,7 @@ export default async function AgentsPage() {
                 const logoUrl = agent.logo_url
                   ? agent.logo_url.startsWith("http")
                     ? agent.logo_url
-                    : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/agents/${agent.logo_url}`
+                    : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/partners/${agent.logo_url}`
                   : null
 
                 return (
@@ -84,7 +84,7 @@ export default async function AgentsPage() {
                     {/* Platform name + logo */}
                     <td className="py-4 pr-4">
                       <Link
-                        href={`/agents/${agent.slug}`}
+                        href={`/partners/${agent.slug}`}
                         className="group flex items-center gap-3"
                       >
                         {logoUrl ? (
@@ -141,7 +141,7 @@ export default async function AgentsPage() {
                     {/* Highlights / CTA */}
                     <td className="hidden py-4 pr-4 lg:table-cell">
                       <Link
-                        href={`/agents/${agent.slug}`}
+                        href={`/partners/${agent.slug}`}
                         className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
                       >
                         View Review →
@@ -151,7 +151,7 @@ export default async function AgentsPage() {
                     {/* Visit button */}
                     <td className="py-4 text-right">
                       <Link
-                        href={`/agents/${agent.slug}`}
+                        href={`/partners/${agent.slug}`}
                         className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
                       >
                         Shop Now

@@ -216,7 +216,7 @@ export default async function Home() {
                 <h2 className="text-lg font-semibold text-zinc-900">
                   Trusted Agents
                 </h2>
-                <Button variant="ghost" size="sm" render={<Link href="/agents" />}>
+                <Button variant="ghost" size="sm" render={<Link href="/partners" />}>
                   Compare All
                   <ArrowRight className="ml-1 size-3.5" />
                 </Button>
@@ -373,7 +373,7 @@ export default async function Home() {
                 size="lg"
                 variant="outline"
                 className="border-zinc-700 text-white hover:bg-zinc-800 hover:text-white"
-                render={<Link href="/agents" />}
+                render={<Link href="/partners" />}
               >
                 Compare Agents
               </Button>

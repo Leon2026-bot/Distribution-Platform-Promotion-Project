@@ -26,11 +26,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return {
     title,
     description,
-    alternates: { canonical: `${SITE_URL}/agents/${slug}` },
+    alternates: { canonical: `${SITE_URL}/partners/${slug}` },
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/agents/${slug}`,
+      url: `${SITE_URL}/partners/${slug}`,
     },
   }
 }
@@ -53,7 +53,7 @@ export default async function AgentPage({ params }: { params: { slug: string } }
   const logoUrl = agent.logo_url
     ? agent.logo_url.startsWith("http")
       ? agent.logo_url
-      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/agents/${agent.logo_url}`
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/partners/${agent.logo_url}`
     : null
 
   return (
@@ -61,15 +61,15 @@ export default async function AgentPage({ params }: { params: { slug: string } }
       <SchemaBreadcrumb
         items={[
           { name: "Home", url: SITE_URL },
-          { name: "Agents", url: `${SITE_URL}/agents` },
-          { name: agent.name, url: `${SITE_URL}/agents/${slug}` },
+          { name: "Agents", url: `${SITE_URL}/partners` },
+          { name: agent.name, url: `${SITE_URL}/partners/${slug}` },
         ]}
       />
 
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },
-          { label: "Agents", href: "/agents" },
+          { label: "Agents", href: "/partners" },
           { label: agent.name },
         ]}
       />

@@ -12,7 +12,7 @@ const footerSections = [
   {
     title: "Resources",
     links: [
-      { label: "Agents", href: "/agents" },
+      { label: "Agents", href: "/partners" },
       { label: "Blog", href: "/blog" },
       { label: "For Promoters", href: "/promoter/register" },
     ],
