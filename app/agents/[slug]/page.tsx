@@ -2,18 +2,13 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
 
-interface AgentPageProps {
-  params: { slug: string }
-}
-
-// ── Static params: prerender agent platforms ─────────────────────────────
+// Static params: prerender agent platforms
 export async function generateStaticParams() {
   const { data } = await supabaseAdmin
     .from("agent_platforms")
@@ -23,11 +18,10 @@ export async function generateStaticParams() {
   return (data ?? []).map(({ slug }) => ({ slug }))
 }
 
-// ── SEO Metadata ──────────────────────────────────────────────────────
-export async function generateMetadata({ params }: AgentPageProps): Promise<Metadata> {
+// SEO Metadata
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const { slug } = params
-  const supabase = await createClient()
-  const { data: agent } = await supabase
+  const { data: agent } = await supabaseAdmin
     .from("agent_platforms")
     .select("name, fee_description, supported_sources")
     .eq("slug", slug)
@@ -51,12 +45,11 @@ export async function generateMetadata({ params }: AgentPageProps): Promise<Meta
   }
 }
 
-// ── Page Component ────────────────────────────────────────────────────
-export default async function AgentPage({ params }: AgentPageProps) {
+// Page Component
+export default async function AgentPage({ params }: { params: { slug: string } }) {
   const { slug } = params
-  const supabase = await createClient()
 
-  const { data: agent } = await supabase
+  const { data: agent } = await supabaseAdmin
     .from("agent_platforms")
     .select("*")
     .eq("slug", slug)
@@ -65,7 +58,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
 
   if (!agent) notFound()
 
-  // Build the jump URL from template
   let jumpUrl = agent.jump_url_template || agent.website_url || "#"
 
   const logoUrl = agent.logo_url
@@ -76,7 +68,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      {/* JSON-LD */}
       <SchemaBreadcrumb
         items={[
           { name: "Home", url: SITE_URL },
@@ -85,7 +76,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
         ]}
       />
 
-      {/* Breadcrumb */}
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },
@@ -94,9 +84,7 @@ export default async function AgentPage({ params }: AgentPageProps) {
         ]}
       />
 
-      {/* Agent header */}
       <div className="mb-8 mt-4 flex items-start gap-5">
-        {/* Agent logo */}
         {logoUrl ? (
           <div className="relative h-20 w-40 shrink-0 overflow-hidden rounded-xl border border-zinc-100 bg-white p-2 shadow-sm">
             <Image
@@ -121,7 +109,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
           </p>
         </div>
 
-        {/* Shop Now button */}
         <a
           href={jumpUrl}
           target="_blank"
@@ -132,11 +119,8 @@ export default async function AgentPage({ params }: AgentPageProps) {
         </a>
       </div>
 
-      {/* Agent details */}
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Main content */}
         <div className="lg:col-span-2">
-          {/* Fee description */}
           {agent.fee_description && (
             <div className="mb-6 rounded-xl border border-zinc-100 p-6">
               <h2 className="mb-3 text-lg font-bold text-zinc-900">Service Fees</h2>
@@ -146,12 +130,11 @@ export default async function AgentPage({ params }: AgentPageProps) {
             </div>
           )}
 
-          {/* Supported sources */}
           {agent.supported_sources && agent.supported_sources.length > 0 && (
             <div className="mb-6 rounded-xl border border-zinc-100 p-6">
               <h2 className="mb-3 text-lg font-bold text-zinc-900">Supported Sources</h2>
               <div className="flex flex-wrap gap-2">
-                {agent.supported_sources.map((source) => (
+                {agent.supported_sources.map((source: string) => (
                   <span
                     key={source}
                     className="inline-block rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-700"
@@ -163,7 +146,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
             </div>
           )}
 
-          {/* Promo code */}
           {agent.site_promo_code && (
             <div className="mb-6 rounded-xl border border-zinc-100 bg-zinc-50 p-6">
               <h2 className="mb-3 text-lg font-bold text-zinc-900">Promo Code</h2>
@@ -174,9 +156,7 @@ export default async function AgentPage({ params }: AgentPageProps) {
           )}
         </div>
 
-        {/* Sidebar */}
         <div className="lg:col-span-1">
-          {/* Quick info card */}
           <div className="rounded-xl border border-zinc-100 p-6">
             <h3 className="mb-4 text-base font-bold text-zinc-900">Quick Info</h3>
             <dl className="space-y-3">
@@ -217,7 +197,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
         </div>
       </div>
 
-      {/* SEO Content Section */}
       <section className="mt-12">
         <h2 className="mb-4 text-xl font-bold text-zinc-900">
           Why Choose {agent.name}?
@@ -234,7 +213,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section className="mt-12">
         <h2 className="mb-4 text-xl font-bold text-zinc-900">
           Frequently Asked Questions
@@ -272,7 +250,6 @@ export default async function AgentPage({ params }: AgentPageProps) {
         </div>
       </section>
 
-      {/* JSON-LD FAQ Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
