@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+// v2: force new function identity
 import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
