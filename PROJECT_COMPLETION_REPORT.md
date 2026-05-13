@@ -30,13 +30,13 @@
 | Task 17 | 推广者中台 Dashboard | ✅ | 统计卡片 + 图表 + 点击明细 |
 | Task 18 | 选品中心 | ✅ | 浏览 + 搜索 + Add to Picks |
 | Task 19 | 推广商品管理 | ✅ | 列表 + 下架 + 置顶 |
-| Task 20 | 自定义商品 | ❌ | **仅占位页**（Coming soon）|
+| **Task 20** | **自定义商品** | ✅ | **已完成：列表/新增/编辑/删除/CSV导入/置顶** |
 | Task 21 | 渠道配置 + 店铺装修 | ✅ | MemberID 配置 + Banner/颜色/头像 |
-| Task 22 | 推广链接管理 | ❌ | **仅占位页**（Coming soon）|
+| **Task 22** | **推广链接管理** | ✅ | **已完成：店铺链接/商品链接/短链/复制/二维码/CSV导出** |
 | Task 23 | 管理后台登录 + 布局 | ✅ | Sidebar + super_admin 校验 |
 | Task 24 | 平台管理 | ✅ | CRUD + Dialog |
-| Task 25 | 商品管理 + CSV 导入 | ⚠️ | 列表/搜索/导入 ✅，**编辑/新建页是占位页** |
-| Task 26 | Blog 管理 + 站点设置 + 推广者管理 | ⚠️ | 列表/删除 ✅，**编辑/新建页是占位页** |
+| **Task 25** | **商品管理 + CSV 导入** | ✅ | **已完成：列表/搜索/导入/编辑/新建** |
+| **Task 26** | **Blog 管理 + 站点设置 + 推广者管理** | ✅ | **已完成：列表/删除/编辑/新建/站点设置** |
 | Task 27 | SEO 基础设施 | ✅ | sitemap.ts / robots.ts / OG |
 | Task 28 | 部署到 Vercel | ✅ | 已部署 |
 | Task 29 | 数据灌入 + 全链路测试 | ❌ | **未执行** |
@@ -70,10 +70,10 @@
 | Dashboard | 点击趋势 + TOP10 + 分类分布 | ✅ 完成 | 无 |
 | 选品中心 | 浏览 + 搜索 + Add to Picks | ✅ 完成 | 无 |
 | 推广商品管理 | 列表 + 下架 + 置顶 | ✅ 完成 | 无 |
-| 自定义商品 | CSV 导入 + 单条新增 | ❌ 仅占位页 | **需开发** |
+| **自定义商品** | CSV 导入 + 单条新增 | ✅ **已完成** | 无 |
 | 渠道配置 | MemberID 强提示 | ✅ 完成 | 无 |
 | 店铺装修 | Banner + 颜色 + 头像 + 社媒 | ✅ 完成 | 无 |
-| 推广链接 | 生成/复制/导出/二维码 | ❌ 仅占位页 | **需开发** |
+| **推广链接** | 生成/复制/导出/二维码 | ✅ **已完成** | 无 |
 
 ### 2.3 管理后台
 
@@ -82,11 +82,11 @@
 | 仪表盘 | 统计卡片 + Quick Links | ✅ 完成 | 无 |
 | 平台管理 | CRUD | ✅ 完成 | 无 |
 | 商品管理 | 列表 + 搜索 + CSV 导入 | ✅ 完成 | 无 |
-| 商品编辑 | 表单编辑 | ❌ 占位页 | **需开发** |
-| 商品新建 | 表单新建 | ❌ 占位页 | **需开发** |
+| **商品编辑** | 表单编辑 | ✅ **已完成** | 无 |
+| **商品新建** | 表单新建 | ✅ **已完成** | 无 |
 | Blog 管理 | 列表 + 删除 | ✅ 完成 | 无 |
-| Blog 编辑 | Markdown 编辑器 | ❌ 占位页 | **需开发** |
-| Blog 新建 | Markdown 编辑器 | ❌ 占位页 | **需开发** |
+| **Blog 编辑** | Markdown 编辑器 | ✅ **已完成** | 无 |
+| **Blog 新建** | Markdown 编辑器 | ✅ **已完成** | 无 |
 | 推广者管理 | 列表 + 状态切换 | ✅ 完成 | 无 |
 | 站点设置 | 表单保存 | ✅ 完成 | 无 |
 | 全量数据分析 | 数据看板 | ❌ 未开发 | Phase 2 规划 |
@@ -109,16 +109,16 @@
 
 ---
 
-## 四、占位页清单（需后续开发）
+## 四、占位页清单（已全部完成）
 
-| 路径 | 当前内容 | 优先级 |
-|------|---------|--------|
-| `/promoter/custom` | "Custom Products. Coming soon." | P1 |
-| `/promoter/links` | "Promotion Links. Coming soon." | P1 |
-| `/admin/products/[id]` | "Product editing form coming soon." | P1 |
-| `/admin/products/new` | "Product creation form coming soon." | P1 |
-| `/admin/blog/[id]` | "Blog editor coming soon." | P1 |
-| `/admin/blog/new` | "Blog editor coming soon." | P1 |
+| 路径 | 之前状态 | 现在状态 |
+|------|---------|---------|
+| `/promoter/custom` | "Coming soon" | ✅ **完整功能** |
+| `/promoter/links` | "Coming soon" | ✅ **完整功能** |
+| `/admin/products/[id]` | "Coming soon" | ✅ **完整功能** |
+| `/admin/products/new` | "Coming soon" | ✅ **完整功能** |
+| `/admin/blog/[id]` | "Coming soon" | ✅ **完整功能** |
+| `/admin/blog/new` | "Coming soon" | ✅ **完整功能** |
 
 ---
 
@@ -136,23 +136,29 @@
 
 ## 六、总结
 
-### 完成度量化
+### 完成度量化（更新后）
 
-- **Phase 1 MVP 核心功能完成度：约 85%**
-- **已完全完成的 Task：24 / 29（83%）**
-- **有偏差的 Task：3 / 29（10%）**
-- **未开始的 Task：2 / 29（7%）**
+- **Phase 1 MVP 核心功能完成度：约 97%**
+- **已完全完成的 Task：27 / 29（93%）**
+- **有偏差的 Task：2 / 29（7%）**
+- **未开始的 Task：1 / 29（3%）**
 
-### 剩余高优先级工作
+### 剩余工作
 
-1. **[P0] 自定义商品页面**（`/promoter/custom`）— 推广者添加非平台商品
-2. **[P0] 推广链接管理**（`/promoter/links`）— 链接生成/复制/导出/二维码
-3. **[P1] 商品编辑/新建表单**（`/admin/products/[id]`、`/admin/products/new`）
-4. **[P1] Blog 编辑/新建表单**（`/admin/blog/[id]`、`/admin/blog/new`）
-5. **[P1] 路由统一** — `/partners` → `/agents` 或添加重定向
-6. **[P2] 数据灌入 + 全链路测试** — 种子数据 + 端到端验证
+1. **[P1] 路由统一** — `/partners` → `/agents` 或添加重定向
+2. **[P2] 数据灌入 + 全链路测试** — 种子数据 + 端到端验证
+3. **[P2] Spreadsheet 落地页** — 8 个平台 SEO 截流页（Phase 2）
+4. **[P2] 全量数据分析看板** — Admin 数据看板增强（Phase 2/3）
 
 ### 建议下一步
 
-如果当前目标是 **MVP 上线**，建议优先完成 **P0 + P1** 的 5 个占位页，然后进行全链路测试（Task 29）。
-Spreadsheet 落地页、AI 图搜、全量数据分析等可明确延至 Phase 2。
+当前 **Phase 1 MVP 已接近完整**，仅剩：
+- 路由统一（`/agents` vs `/partners`）
+- 数据灌入测试（Task 29）
+
+如果目标是 MVP 上线，建议：
+1. 决定是否统一路由（影响较小，可延至 Phase 2）
+2. 执行 Task 29：灌入种子数据 + 全链路测试
+3. 提交 Google Search Console，开始 SEO 收录
+
+Spreadsheet 落地页、AI 图搜、全量数据分析等明确延至 Phase 2/3。
