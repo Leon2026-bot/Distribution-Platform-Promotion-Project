@@ -17,10 +17,11 @@ const navLinks = [
   { label: "Browse", href: "/products", children: [
     { label: "All Products", href: "/products" },
     { label: "Brands", href: "/brands" },
-    { label: "Categories", href: "/categories" },
+    { label: "Categories", href: "/category/sneakers" },
   ]},
   { label: "Agents", href: "/partners" },
   { label: "Blog", href: "/blog" },
+  { label: "Spreadsheet", href: "/spreadsheet/kakobuy-spreadsheet" },
 ]
 
 export function Header() {
