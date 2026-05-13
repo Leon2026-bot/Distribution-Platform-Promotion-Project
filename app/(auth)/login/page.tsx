@@ -33,7 +33,11 @@ export default function LoginPage() {
     }
 
     toast.success("Welcome back!")
-    router.push("/promoter/dashboard")
+
+    // Check role and redirect accordingly
+    const { data: { user } } = await supabase.auth.getUser()
+    const isAdmin = user?.user_metadata?.role === "super_admin"
+    router.push(isAdmin ? "/admin/dashboard" : "/promoter/dashboard")
     router.refresh()
   }
 
