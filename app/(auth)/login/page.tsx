@@ -34,11 +34,13 @@ export default function LoginPage() {
 
     toast.success("Welcome back!")
 
-    // Check role and redirect accordingly
+    // Check role and open dashboard in a new tab
     const { data: { user } } = await supabase.auth.getUser()
-    const isAdmin = user?.user_metadata?.role === "super_admin"
-    router.push(isAdmin ? "/admin/dashboard" : "/promoter/dashboard")
-    router.refresh()
+    const isAdmin =
+      user?.user_metadata?.role === "super_admin" ||
+      user?.app_metadata?.role === "super_admin"
+    const dashboardUrl = isAdmin ? "/admin/dashboard" : "/promoter/dashboard"
+    window.open(dashboardUrl, "_blank")
   }
 
   const handleGoogleLogin = async () => {

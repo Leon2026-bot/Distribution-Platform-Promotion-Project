@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Trash2, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import toast from "react-hot-toast"
+import { useCurrency } from "@/components/providers/CurrencyProvider"
 
 interface MyProduct {
   id: string
@@ -26,6 +27,7 @@ interface MyProduct {
 export default function MyProductsPage() {
   const [products, setProducts] = useState<MyProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const { convert, symbol, currency } = useCurrency()
 
   useEffect(() => {
     fetch("/api/promoter/my-products")
@@ -116,7 +118,7 @@ export default function MyProductsPage() {
                     {title}
                   </p>
                   <p className="text-xs text-zinc-400">
-                    {product?.brand} · ≈ ${(price / 7.2).toFixed(2)}
+                    {product?.brand} · {symbol}{(currency === "CNY" ? Math.round(convert(price)) : convert(price).toFixed(2)).toLocaleString()}
                   </p>
                 </div>
 

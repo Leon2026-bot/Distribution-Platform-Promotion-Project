@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes"
 import { Toaster } from "react-hot-toast"
 import { Header } from "@/components/layout/Header"
 import { Footer } from "@/components/layout/Footer"
+import { CurrencyProvider } from "@/components/providers/CurrencyProvider"
 import "./globals.css"
 
 const inter = Inter({
@@ -45,9 +46,11 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <Header />
-          <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
-          <Footer />
+          <CurrencyProvider>
+            <Header />
+            <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
+            <Footer />
+          </CurrencyProvider>
           <Toaster
             position="bottom-right"
             toastOptions={{

@@ -118,13 +118,17 @@ export default function RegisterPage() {
       return
     }
 
-    // Update promoter profile (bio)
+    // Create or update promoter profile
     const { data: userData } = await supabase.auth.getUser()
     if (userData.user) {
       await supabase
         .from("promoters")
-        .update({ bio })
-        .eq("user_id", userData.user.id)
+        .upsert({
+          user_id: userData.user.id,
+          username,
+          display_name: displayName,
+          bio,
+        }, { onConflict: "user_id" })
     }
 
     // Save channels

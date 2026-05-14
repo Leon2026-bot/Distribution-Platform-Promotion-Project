@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import toast from "react-hot-toast"
 import type { Database } from "@/types/supabase"
+import { useCurrency } from "@/components/providers/CurrencyProvider"
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"]
 
@@ -19,6 +20,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [addingIds, setAddingIds] = useState<Set<string>>(new Set())
+  const { convert, symbol, currency } = useCurrency()
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -151,7 +153,7 @@ export default function ProductsPage() {
                     {product.title}
                   </h3>
                   <p className="mt-1 text-sm font-semibold text-zinc-900">
-                    ≈ ${(product.price_cny / 7.2).toFixed(2)}
+                    {symbol}{(currency === "CNY" ? Math.round(convert(product.price_cny ?? 0)) : convert(product.price_cny ?? 0).toFixed(2)).toLocaleString()}
                   </p>
                 </div>
               </div>

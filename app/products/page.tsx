@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 import { ProductGrid } from "@/components/product/ProductGrid"
@@ -8,6 +8,7 @@ import { ProductFilters } from "@/components/product/ProductFilters"
 
 const PER_PAGE = 24
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
+const USD_RATE = parseFloat(process.env.NEXT_PUBLIC_USD_RATE || "USD_RATE")
 
 export const metadata: Metadata = {
   title: "All Products – Buy from China | Finds Engine",
@@ -45,7 +46,26 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const page = Math.max(1, parseInt(params.page || "1", 10) || 1)
   const offset = (page - 1) * PER_PAGE
 
-  const supabase = await createClient()
+  // Build product query conditionally
+  let productQuery = supabaseAdmin
+    .from("products")
+    .select("*", { count: "exact" })
+    .eq("is_active", true)
+    .ilike("category", category ? `%${category}%` : "%")
+    .ilike("title", q ? `%${q}%` : "%")
+
+  if (brands.length > 0) {
+    // brand slug → name for case-insensitive match (e.g. "nike" → "Nike", "new-balance" → "New Balance")
+    productQuery = productQuery.ilike("brand", brands[0].replace(/-/g, " "))
+  }
+
+  if (priceMin != null) {
+    productQuery = productQuery.gte("price_usd", priceMin)
+  }
+
+  if (priceMax != null) {
+    productQuery = productQuery.lte("price_usd", priceMax)
+  }
 
   // ── Parallel queries ──────────────────────────────────────────────
   const [
@@ -53,29 +73,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     { data: categoriesData },
     { data: brandsData },
   ] = await Promise.all([
-    // Main product query with filters
-    supabase
-      .from("products")
-      .select("*", { count: "exact" })
-      .eq("is_active", true)
-      .ilike("category", category ? `%${category}%` : "%")
-      .eq(
-        brands.length > 0 ? "brand" : "is_active",
-        brands.length > 0 ? brands[0] : true
-      )
-      .ilike("title", q ? `%${q}%` : "%")
-      .gte(priceMin ? "price_usd" : "is_active", priceMin ?? true)
-      .lte(priceMax ? "price_usd" : "is_active", priceMax ?? true)
-      .range(offset, offset + PER_PAGE - 1),
+    productQuery.range(offset, offset + PER_PAGE - 1),
     // Categories for filter sidebar
-    supabase
+    supabaseAdmin
       .from("categories")
       .select("slug, name, product_count")
       .eq("status", "active")
       .is("parent_id", null)
       .order("sort_order", { ascending: true }),
     // Brands for filter sidebar
-    supabase
+    supabaseAdmin
       .from("brands")
       .select("slug, name")
       .eq("status", "active")
@@ -86,7 +93,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   // ── Handle multiple brands filter ──────────────────────────────────
   let products = productsData ?? []
   if (brands.length > 1) {
-    products = products.filter((p) => p.brand && brands.includes(p.brand.toLowerCase()))
+    products = products.filter((p) => {
+      if (!p.brand) return false
+      const productBrandSlug = p.brand.toLowerCase().replace(/\s+/g, "-")
+      return brands.some((b) => b === productBrandSlug)
+    })
   }
 
   // ── Handle multiple tags filter ────────────────────────────────────
@@ -105,9 +116,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       case "newest":
         return new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime()
       case "price_asc":
-        return (a.price_usd ?? a.price_cny / 7.2) - (b.price_usd ?? b.price_cny / 7.2)
+        return (a.price_usd ?? a.price_cny / USD_RATE) - (b.price_usd ?? b.price_cny / USD_RATE)
       case "price_desc":
-        return (b.price_usd ?? b.price_cny / 7.2) - (a.price_usd ?? a.price_cny / 7.2)
+        return (b.price_usd ?? b.price_cny / USD_RATE) - (a.price_usd ?? a.price_cny / USD_RATE)
       case "popular":
       default:
         return (b.click_count ?? 0) - (a.click_count ?? 0)
@@ -204,6 +215,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               ...p,
               brand_name: p.brand ?? undefined,
             }))}
+            sort={sort}
             emptyMessage={
               q
                 ? `No products found for "${q}". Try different keywords.`

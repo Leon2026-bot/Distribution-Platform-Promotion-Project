@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 import { ProductGrid } from "@/components/product/ProductGrid"
@@ -7,6 +7,7 @@ import { Pagination } from "@/components/product/Pagination"
 
 const PER_PAGE = 24
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
+const USD_RATE = parseFloat(process.env.NEXT_PUBLIC_USD_RATE || "USD_RATE")
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -44,10 +45,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const page = Math.max(1, parseInt(params.page || "1", 10) || 1)
   const offset = (page - 1) * PER_PAGE
 
-  const supabase = await createClient()
-
   // ── Build search query (search across multiple fields) ──────────────
-  let query = supabase
+  let query = supabaseAdmin
     .from("products")
     .select("*", { count: "exact" })
     .eq("is_active", true)
@@ -78,9 +77,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       case "newest":
         return new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime()
       case "price_asc":
-        return (a.price_usd ?? a.price_cny / 7.2) - (b.price_usd ?? b.price_cny / 7.2)
+        return (a.price_usd ?? a.price_cny / USD_RATE) - (b.price_usd ?? b.price_cny / USD_RATE)
       case "price_desc":
-        return (b.price_usd ?? b.price_cny / 7.2) - (a.price_usd ?? a.price_cny / 7.2)
+        return (b.price_usd ?? b.price_cny / USD_RATE) - (a.price_usd ?? a.price_cny / USD_RATE)
       case "popular":
       default:
         return (b.click_count ?? 0) - (a.click_count ?? 0)

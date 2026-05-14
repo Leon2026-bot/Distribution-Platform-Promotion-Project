@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ProductCard } from "@/components/product/ProductCard"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 
 // Reusable category icons for static nav
 const categories = [
@@ -16,8 +16,6 @@ const categories = [
 ]
 
 export default async function Home() {
-  const supabase = await createClient()
-
   // Parallel data fetching
   const [
     { data: brands },
@@ -27,7 +25,7 @@ export default async function Home() {
     { data: blogPosts },
   ] = await Promise.all([
     // Hot Brands: 12 active, ordered by product_count desc
-    supabase
+    supabaseAdmin
       .from("brands")
       .select("id, name, slug, logo_url, product_count")
       .eq("status", "active")
@@ -35,7 +33,7 @@ export default async function Home() {
       .limit(12),
 
     // New Arrivals: 8 most recent
-    supabase
+    supabaseAdmin
       .from("products")
       .select("*")
       .eq("is_active", true)
@@ -43,7 +41,7 @@ export default async function Home() {
       .limit(8),
 
     // Most Popular: 8 by click_count
-    supabase
+    supabaseAdmin
       .from("products")
       .select("*")
       .eq("is_active", true)
@@ -51,14 +49,14 @@ export default async function Home() {
       .limit(8),
 
     // Active Platforms
-    supabase
+    supabaseAdmin
       .from("agent_platforms")
       .select("id, name, slug, logo_url, website_url")
       .eq("is_active", true)
       .order("display_order", { ascending: true }),
 
     // Latest Blog Posts: 3 published
-    supabase
+    supabaseAdmin
       .from("blog_posts")
       .select("id, title, slug, cover_image, excerpt, published_at")
       .eq("status", "published")
@@ -145,10 +143,12 @@ export default async function Home() {
               <h2 className="text-lg font-semibold text-zinc-900">
                 Popular Brands
               </h2>
-              <Button variant="ghost" size="sm" render={<Link href="/brands" />}>
-                View All
-                <ArrowRight className="ml-1 size-3.5" />
-              </Button>
+              <Link href="/brands">
+                <Button variant="ghost" size="sm">
+                  View All
+                  <ArrowRight className="ml-1 size-3.5" />
+                </Button>
+              </Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {brands.slice(0, 8).map((brand) => (
@@ -195,10 +195,12 @@ export default async function Home() {
               <h2 className="text-lg font-semibold text-zinc-900">
                 New Arrivals
               </h2>
-              <Button variant="ghost" size="sm" render={<Link href="/products?sort=newest" />}>
-                View All
-                <ArrowRight className="ml-1 size-3.5" />
-              </Button>
+              <Link href="/products?sort=newest">
+                <Button variant="ghost" size="sm">
+                  View All
+                  <ArrowRight className="ml-1 size-3.5" />
+                </Button>
+              </Link>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {activeProducts.map((product) => (
@@ -216,10 +218,12 @@ export default async function Home() {
                 <h2 className="text-lg font-semibold text-zinc-900">
                   Trusted Agents
                 </h2>
-                <Button variant="ghost" size="sm" render={<Link href="/partners" />}>
-                  Compare All
-                  <ArrowRight className="ml-1 size-3.5" />
-                </Button>
+                <Link href="/partners">
+                  <Button variant="ghost" size="sm">
+                    Compare All
+                    <ArrowRight className="ml-1 size-3.5" />
+                  </Button>
+                </Link>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 {platforms.map((platform) => (
@@ -304,10 +308,12 @@ export default async function Home() {
                 <h2 className="text-lg font-semibold text-zinc-900">
                   Latest Articles
                 </h2>
-                <Button variant="ghost" size="sm" render={<Link href="/blog" />}>
-                  Read More
-                  <ArrowRight className="ml-1 size-3.5" />
-                </Button>
+                <Link href="/blog">
+                  <Button variant="ghost" size="sm">
+                    Read More
+                    <ArrowRight className="ml-1 size-3.5" />
+                  </Button>
+                </Link>
               </div>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {blogPosts.map((post) => (
@@ -365,18 +371,21 @@ export default async function Home() {
               Browse our full catalog and find the best deals across all agents.
             </p>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <Button size="lg" render={<Link href="/products" />}>
-                Browse Products
-                <ArrowRight className="ml-1 size-4" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-zinc-700 text-white hover:bg-zinc-800 hover:text-white"
-                render={<Link href="/partners" />}
-              >
-                Compare Agents
-              </Button>
+              <Link href="/products">
+                <Button size="lg">
+                  Browse Products
+                  <ArrowRight className="ml-1 size-4" />
+                </Button>
+              </Link>
+              <Link href="/partners">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-zinc-700 text-white hover:bg-zinc-800 hover:text-white"
+                >
+                  Compare Agents
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { ExternalLink } from "lucide-react"
 import type { Database } from "@/types/supabase"
+import { useCurrency } from "@/components/providers/CurrencyProvider"
 
 type ProductRow = Database["public"]["Tables"]["products"]["Row"]
 type AgentPlatform = Database["public"]["Tables"]["agent_platforms"]["Row"]
@@ -44,7 +45,11 @@ export function PromoterProductCard({
       : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products/${rawImage}`
 
   const priceCny = product.price_cny ?? 0
-  const priceUsd = (priceCny / 7.2).toFixed(2)
+  const { convert, symbol, currency } = useCurrency()
+  const displayPrice = convert(priceCny)
+  const formattedPrice = currency === "CNY"
+    ? `${symbol}${Math.round(displayPrice).toLocaleString()}`
+    : `${symbol}${displayPrice.toFixed(2)}`
 
   const handleBuyNow = async () => {
     if (!defaultPlatform || !product.source_item_id) return
@@ -111,7 +116,7 @@ export function PromoterProductCard({
         {/* Price */}
         <div className="mt-1.5 flex items-baseline gap-1.5">
           <span className="text-sm font-semibold text-zinc-900">
-            ≈ ${priceUsd}
+            {formattedPrice}
           </span>
           <span className="text-xs text-zinc-400">¥{priceCny}</span>
         </div>

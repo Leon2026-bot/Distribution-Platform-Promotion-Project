@@ -5,8 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatPrice(cny: number, rate: number = 7.2): string {
-  return `$${(cny / rate).toFixed(2)}`
+export function formatPrice(cny: number, rate?: number): string {
+  const usdRate = rate ?? parseFloat(process.env.NEXT_PUBLIC_USD_RATE || "7.2")
+  return `$${(cny / usdRate).toFixed(2)}`
 }
 
 export function generateSlug(text: string): string {

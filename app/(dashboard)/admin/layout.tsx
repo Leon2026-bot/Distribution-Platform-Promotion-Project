@@ -38,7 +38,9 @@ export default async function AdminLayout({
     redirect("/login")
   }
 
-  const isAdmin = user.user_metadata?.role === "super_admin"
+  const isAdmin =
+    user.user_metadata?.role === "super_admin" ||
+    user.app_metadata?.role === "super_admin"
   if (!isAdmin) {
     redirect("/")
   }
@@ -100,11 +102,16 @@ export default async function AdminLayout({
       <div className="flex flex-1 flex-col">
         <header className="flex h-14 items-center gap-3 border-b border-zinc-200 bg-white px-4 lg:hidden">
           <Sheet>
-            <SheetTrigger>
-              <Button variant="ghost" size="icon">
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
+            <SheetTrigger
+              render={
+                <button
+                  type="button"
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                >
+                  <Menu className="size-5" />
+                </button>
+              }
+            />
             <SheetContent side="left" className="w-60 p-0">
               <div className="flex h-14 items-center border-b border-zinc-100 px-4">
                 <span className="flex items-center gap-2 text-sm font-bold text-zinc-900">

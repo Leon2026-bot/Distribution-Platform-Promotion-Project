@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 import { BlogCard } from "@/components/blog/BlogCard"
@@ -32,14 +32,12 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const page = Math.max(1, parseInt(params.page || "1", 10) || 1)
   const offset = (page - 1) * PER_PAGE
 
-  const supabase = await createClient()
-
   // Parallel queries
   const [
     { data: posts, count: totalCount },
     { data: allPosts },
   ] = await Promise.all([
-    supabase
+    supabaseAdmin
       .from("blog_posts")
       .select("*", { count: "exact" })
       .eq("status", "published")
@@ -47,7 +45,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       .order("published_at", { ascending: false })
       .range(offset, offset + PER_PAGE - 1),
 
-    supabase
+    supabaseAdmin
       .from("blog_posts")
       .select("tags")
       .eq("status", "published"),
@@ -59,8 +57,6 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const sortedTags = Array.from(allTags).sort()
 
   const postsList = posts ?? []
-  const featuredPost = postsList[0] ?? null
-  const restPosts = postsList.slice(1)
   const totalPages = Math.ceil((totalCount ?? 0) / PER_PAGE)
 
   return (
@@ -116,29 +112,16 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         </div>
       )}
 
-      {/* Featured post + grid */}
+      {/* Post list */}
       {postsList.length > 0 ? (
-        <div className="space-y-8">
-          {/* Featured + first row */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredPost && <BlogCard post={featuredPost} featured />}
-            {restPosts.slice(0, 2).map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
-          </div>
-
-          {/* Remaining posts */}
-          {restPosts.length > 2 && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {restPosts.slice(2).map((post) => (
-                <BlogCard key={post.id} post={post} />
-              ))}
-            </div>
-          )}
+        <div className="space-y-3">
+          {postsList.map((post) => (
+            <BlogCard key={post.id} post={post} />
+          ))}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
+            <div className="flex items-center justify-center gap-2 pt-6">
               {page > 1 && (
                 <Link
                   href={`/blog?page=${page - 1}${tag ? `&tag=${tag}` : ""}`}

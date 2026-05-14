@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Share2, Bookmark } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
@@ -12,6 +11,7 @@ import { ProductGrid } from "@/components/product/ProductGrid"
 import { ProductViewTracker } from "@/components/product/ProductViewTracker"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { PriceDisplay } from "@/components/ui/PriceDisplay"
 import type { Database } from "@/types/supabase"
 
 type Product = Database["public"]["Tables"]["products"]["Row"]
@@ -41,8 +41,7 @@ export async function generateStaticParams() {
 // ── SEO Metadata ──────────────────────────────────────────────────────
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data: product } = await supabase
+  const { data: product } = await supabaseAdmin
     .from("products")
     .select("title, brand, price_cny, price_usd, images, seo_title, seo_description, description")
     .eq("slug", slug)
@@ -84,10 +83,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 // ── Page Component ────────────────────────────────────────────────────
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params
-  const supabase = await createClient()
 
   // ── Fetch product + platforms + related in parallel ────────────────
-  const { data: product } = await supabase
+  const { data: product } = await supabaseAdmin
     .from("products")
     .select("*")
     .eq("slug", slug)
@@ -101,12 +99,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   // Fetch platforms and related products in parallel
   const [{ data: platforms }, { data: relatedProducts }, { data: relatedBlogPosts }] =
     await Promise.all([
-      supabase
+      supabaseAdmin
         .from("agent_platforms")
         .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true }),
-      supabase
+      supabaseAdmin
         .from("products")
         .select("*")
         .eq("is_active", true)
@@ -115,7 +113,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           `brand.eq.${product.brand ?? "__none__"},category.eq.${product.category}`
         )
         .limit(8),
-      supabase
+      supabaseAdmin
         .from("blog_posts")
         .select("id, title, slug, excerpt, cover_image, published_at")
         .eq("status", "published")
@@ -123,11 +121,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         .limit(3),
     ])
 
-  // Add estimated price to each platform (base price only, no fee here)
-  const platformsWithPrice = (platforms ?? []).map((p) => ({
-    ...p,
-    estimated_price_usd: priceUsd,
-  }))
+  // Pass raw platforms — WhereToBuy handles currency conversion client-side
+  const activePlatforms = platforms ?? []
 
   // Parse sizes from JSON field
   const sizes = product.sizes as Record<string, string[]> | null
@@ -195,7 +190,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           {/* Price */}
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-zinc-900">
-              ≈ ${priceUsd.toFixed(2)}
+              <PriceDisplay priceCny={product.price_cny ?? 0} />
             </span>
             <span className="text-base text-zinc-400">¥{product.price_cny}</span>
           </div>
@@ -248,7 +243,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               source_item_id: product.source_item_id,
               price_cny: product.price_cny,
             }}
-            platforms={platformsWithPrice}
+            platforms={activePlatforms}
             promoter={null}
           />
 
@@ -281,69 +276,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               {product.description_zh && (
                 <p className="text-zinc-400">{product.description_zh}</p>
               )}
-            </div>
-          </section>
-        )}
-
-        {/* Platform comparison table */}
-        {platformsWithPrice.length > 0 && (
-          <section>
-            <h2 className="mb-4 text-lg font-semibold text-zinc-900">
-              Platform Comparison
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wide text-zinc-400">
-                    <th className="pb-2 pr-4">Platform</th>
-                    <th className="pb-2 pr-4">Service Fee</th>
-                    <th className="pb-2 pr-4">Est. Price</th>
-                    <th className="pb-2">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-50">
-                  {platformsWithPrice.map((platform) => (
-                    <tr key={platform.id}>
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2">
-                          {platform.logo_url ? (
-                            <img
-                              src={
-                                platform.logo_url.startsWith("http")
-                                  ? platform.logo_url
-                                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/platforms/${platform.logo_url}`
-                              }
-                              alt={platform.name}
-                              className="size-5 object-contain"
-                            />
-                          ) : (
-                            <div className="flex size-5 items-center justify-center rounded-full bg-zinc-100 text-[9px] font-bold text-zinc-500">
-                              {platform.name.charAt(0)}
-                            </div>
-                          )}
-                          <span className="font-medium text-zinc-800">{platform.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4 text-zinc-500">
-                        {platform.fee_description ?? "—"}
-                      </td>
-                      <td className="py-3 pr-4 font-semibold text-zinc-900">
-                        ≈ ${priceUsd.toFixed(2)}
-                      </td>
-                      <td className="py-3">
-                        <a
-                          href={platform.website_url ?? "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-800"
-                        >
-                          Visit →
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </section>
         )}

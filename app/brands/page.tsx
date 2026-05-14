@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
@@ -15,11 +15,9 @@ export const metadata: Metadata = {
 }
 
 export default async function BrandsPage() {
-  const supabase = await createClient()
-
   const [{ data: brands }, { data: allBrands }] = await Promise.all([
     // Featured brands with logos first
-    supabase
+    supabaseAdmin
       .from("brands")
       .select("id, name, slug, logo_url, product_count")
       .eq("status", "active")
@@ -28,7 +26,7 @@ export default async function BrandsPage() {
       .limit(60),
 
     // All brands for alphabet listing
-    supabase
+    supabaseAdmin
       .from("brands")
       .select("id, name, slug, product_count")
       .eq("status", "active")

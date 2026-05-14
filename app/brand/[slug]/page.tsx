@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
@@ -10,6 +9,7 @@ import { ProductGrid } from "@/components/product/ProductGrid"
 import { Pagination } from "@/components/product/Pagination"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
+const USD_RATE = parseFloat(process.env.NEXT_PUBLIC_USD_RATE || "USD_RATE")
 const PER_PAGE = 24
 
 interface BrandPageProps {
@@ -31,8 +31,7 @@ export async function generateStaticParams() {
 // ── SEO Metadata ──────────────────────────────────────────────────────
 export async function generateMetadata({ params }: BrandPageProps): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
-  const { data: brand } = await supabase
+  const { data: brand } = await supabaseAdmin
     .from("brands")
     .select("name, product_count")
     .eq("slug", slug)
@@ -63,8 +62,6 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const page = Math.max(1, parseInt(pageParam || "1", 10) || 1)
   const offset = (page - 1) * PER_PAGE
 
-  const supabase = await createClient()
-
   // ── Parallel queries ───────────────────────────────────────────────
   const [
     { data: brand },
@@ -72,7 +69,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
     { data: relatedBlogPosts },
   ] = await Promise.all([
     // Brand info
-    supabase
+    supabaseAdmin
       .from("brands")
       .select("id, name, slug, logo_url, product_count")
       .eq("slug", slug)
@@ -80,7 +77,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
       .single(),
 
     // Products by brand (match brand name case-insensitively via ilike)
-    supabase
+    supabaseAdmin
       .from("products")
       .select("*", { count: "exact" })
       .eq("is_active", true)
@@ -88,7 +85,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
       .range(offset, offset + PER_PAGE - 1),
 
     // Related blog posts (generic for now)
-    supabase
+    supabaseAdmin
       .from("blog_posts")
       .select("id, title, slug, excerpt, cover_image, published_at")
       .eq("status", "published")
@@ -103,9 +100,9 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
       case "newest":
         return new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime()
       case "price_asc":
-        return (a.price_usd ?? a.price_cny / 7.2) - (b.price_usd ?? b.price_cny / 7.2)
+        return (a.price_usd ?? a.price_cny / USD_RATE) - (b.price_usd ?? b.price_cny / USD_RATE)
       case "price_desc":
-        return (b.price_usd ?? b.price_cny / 7.2) - (a.price_usd ?? a.price_cny / 7.2)
+        return (b.price_usd ?? b.price_cny / USD_RATE) - (a.price_usd ?? a.price_cny / USD_RATE)
       case "popular":
       default:
         return (b.click_count ?? 0) - (a.click_count ?? 0)

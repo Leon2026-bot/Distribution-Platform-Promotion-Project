@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
+import { useCurrency, type Currency } from "@/components/providers/CurrencyProvider"
 
 const navLinks = [
   { label: "Browse", href: "/products", children: [
@@ -21,13 +22,19 @@ const navLinks = [
   ]},
   { label: "Agents", href: "/partners" },
   { label: "Blog", href: "/blog" },
-  { label: "Spreadsheet", href: "/spreadsheet/kakobuy-spreadsheet" },
 ]
+
+const CURRENCY_LABELS: Record<Currency, string> = {
+  CNY: "CNY ¥",
+  USD: "USD $",
+  EUR: "EUR €",
+}
 
 export function Header() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const { currency, setCurrency, symbol } = useCurrency()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,75 +43,110 @@ export function Header() {
     }
   }
 
+  const isDashboard = pathname.startsWith("/promoter") || pathname.startsWith("/admin")
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <span className="text-lg font-bold tracking-tight text-zinc-900">
-            Finds<span className="text-zinc-400"> Engine</span>
+            {isDashboard ? "Promotion" : "Finds"}
+            <span className="text-zinc-400">{isDashboard ? " Dashboard" : " Engine"}</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) =>
-            link.children ? (
-              <DropdownMenu key={link.label}>
-                <DropdownMenuTrigger
-                  render={
-                    <Link
-                      href={link.href}
-                      className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 ${
-                        pathname.startsWith(link.href)
-                          ? "text-zinc-900"
-                          : "text-zinc-600"
-                      }`}
-                    />
-                  }
+        {!isDashboard && (
+          <nav className="hidden items-center gap-1 md:flex">
+            {navLinks.map((link) =>
+              link.children ? (
+                <DropdownMenu key={link.label}>
+                  <DropdownMenuTrigger
+                    className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 ${
+                      pathname.startsWith(link.href)
+                        ? "text-zinc-900"
+                        : "text-zinc-600"
+                    }`}
+                  >
+                    {link.label}
+                    <ChevronDown className="size-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {link.children.map((child) => (
+                      <DropdownMenuItem key={child.href}>
+                        <Link href={child.href} className="flex w-full">
+                          {child.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 ${
+                    pathname === link.href
+                      ? "text-zinc-900"
+                      : "text-zinc-600"
+                  }`}
                 >
                   {link.label}
-                  <ChevronDown className="size-3.5" />
+                </Link>
+              )
+            )}
+          </nav>
+        )}
+
+        {/* Desktop Right Section */}
+        <div className="hidden items-center gap-2 md:flex">
+          {!isDashboard && (
+            <>
+              <form onSubmit={handleSearch} className="relative">
+                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  type="search"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8 w-96 pl-8 text-sm"
+                />
+              </form>
+
+              {/* Currency Switcher */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900">
+                  <span className="text-sm font-medium">{symbol}</span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {link.children.map((child) => (
-                    <DropdownMenuItem key={child.href} render={<Link href={child.href} />}>
-                      {child.label}
+                <DropdownMenuContent align="end" className="min-w-[120px]">
+                  {(Object.keys(CURRENCY_LABELS) as Currency[]).map((c) => (
+                    <DropdownMenuItem
+                      key={c}
+                      onClick={() => setCurrency(c)}
+                      className={currency === c ? "bg-zinc-100 font-medium" : ""}
+                    >
+                      {CURRENCY_LABELS[c]}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 ${
-                  pathname === link.href
-                    ? "text-zinc-900"
-                    : "text-zinc-600"
-                }`}
-              >
-                {link.label}
-              </Link>
-            )
-          )}
-        </nav>
 
-        {/* Desktop Right Section */}
-        <div className="hidden items-center gap-2 md:flex">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 w-48 pl-8 text-sm"
-            />
-          </form>
-          <Button variant="ghost" size="sm" render={<Link href="/login" />}>
-            Sign In
-          </Button>
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+            </>
+          )}
+
+          {isDashboard && (
+            <a href="http://localhost:3002/" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm">
+                Access Frontend
+              </Button>
+            </a>
+          )}
         </div>
 
         {/* Mobile Menu Button */}

@@ -1,6 +1,7 @@
 "use client"
 
 import { Database } from "@/types/supabase"
+import { useCurrency } from "@/components/providers/CurrencyProvider"
 import { BuyNowButton } from "./BuyNowButton"
 
 type AgentPlatform = Database["public"]["Tables"]["agent_platforms"]["Row"]
@@ -19,19 +20,18 @@ interface WhereToBuyProps {
     source_item_id: string | null
     price_cny?: number | null
   }
-  platforms: (AgentPlatform & { estimated_price_usd?: number })[]
+  platforms: AgentPlatform[]
   promoter?: PromoterWithChannels | null
 }
 
 export function WhereToBuy({ product, platforms, promoter }: WhereToBuyProps) {
-  // Sort platforms by estimated price low to high
+  const { convert, symbol, currency } = useCurrency()
+  const priceCny = product.price_cny ?? 0
+
+  // Sort platforms by current currency converted price low to high
   const sortedPlatforms = [...platforms]
     .filter((p) => p.is_active)
-    .sort(
-      (a, b) =>
-        (a.estimated_price_usd ?? Infinity) -
-        (b.estimated_price_usd ?? Infinity)
-    )
+    .sort(() => 0) // Platforms have same base price, no sorting needed
 
   if (sortedPlatforms.length === 0) {
     return (
@@ -89,9 +89,9 @@ export function WhereToBuy({ product, platforms, promoter }: WhereToBuyProps) {
               <div className="flex-1" />
 
               {/* Estimated Price */}
-              {platform.estimated_price_usd && (
+              {priceCny > 0 && (
                 <span className="text-sm font-semibold text-zinc-900">
-                  ≈ ${platform.estimated_price_usd.toFixed(2)}
+                  ≈ {symbol}{currency === "CNY" ? Math.round(convert(priceCny)).toLocaleString() : convert(priceCny).toFixed(2)}
                 </span>
               )}
 

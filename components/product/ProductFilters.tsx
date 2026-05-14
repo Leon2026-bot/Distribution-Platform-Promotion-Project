@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useState } from "react"
-import { SlidersHorizontal, X } from "lucide-react"
+import { SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -72,6 +72,17 @@ export function ProductFilters({
   const searchParams = useSearchParams()
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Collapsible section states
+  const [openSections, setOpenSections] = useState({
+    category: true,
+    brand: false,
+    tags: false,
+  })
+
+  const toggleSection = (section: "category" | "brand" | "tags") => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  }
+
   // Build new URL params
   const buildUrl = useCallback(
     (updates: Record<string, string | null>) => {
@@ -138,121 +149,124 @@ export function ProductFilters({
       </div>
 
       {/* Category */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Category
-        </label>
-        <div className="space-y-1">
-          <button
-            onClick={() => {
-              navigate({ category: null })
-              setMobileOpen(false)
-            }}
-            className={`block w-full rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
-              !searchParams.get("category")
-                ? "bg-zinc-900 font-medium text-white"
-                : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            All Categories
-          </button>
-          {categories.map((cat) => (
+      <div className="border-b border-zinc-100 pb-4">
+        <button
+          onClick={() => toggleSection("category")}
+          className="flex w-full items-center justify-between py-1"
+        >
+          <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            Category
+          </span>
+          <div className="flex items-center gap-1.5">
+            {(() => {
+              const current = searchParams.get("category")
+              if (!current) return null
+              const catName = categories.find((c) => c.slug === current)?.name ?? current
+              return (
+                <span className="max-w-[100px] truncate text-[11px] text-zinc-700">
+                  {catName}
+                </span>
+              )
+            })()}
+            {openSections.category ? (
+              <ChevronUp className="size-3.5 text-zinc-400" />
+            ) : (
+              <ChevronDown className="size-3.5 text-zinc-400" />
+            )}
+          </div>
+        </button>
+        {openSections.category && (
+          <div className="mt-2 space-y-1">
             <button
-              key={cat.slug}
               onClick={() => {
-                navigate({ category: cat.slug })
+                navigate({ category: null })
                 setMobileOpen(false)
               }}
-              className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
-                searchParams.get("category") === cat.slug
+              className={`block w-full rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
+                !searchParams.get("category")
                   ? "bg-zinc-900 font-medium text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
               }`}
             >
-              <span>{cat.name}</span>
-              {cat.product_count !== null && cat.product_count > 0 && (
-                <span className="text-xs opacity-60">({cat.product_count})</span>
-              )}
+              All Categories
             </button>
-          ))}
-        </div>
+            {categories.map((cat) => (
+              <button
+                key={cat.slug}
+                onClick={() => {
+                  navigate({ category: cat.slug })
+                  setMobileOpen(false)
+                }}
+                className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
+                  searchParams.get("category") === cat.slug
+                    ? "bg-zinc-900 font-medium text-white"
+                    : "text-zinc-600 hover:bg-zinc-100"
+                }`}
+              >
+                <span>{cat.name}</span>
+                {cat.product_count !== null && cat.product_count > 0 && (
+                  <span className="text-xs opacity-60">({cat.product_count})</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Brand */}
-      <div>
-        <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Brand
-        </label>
-        <div className="flex flex-wrap gap-1.5">
-          {brands.map((brand) => {
-            const currentBrands = searchParams.getAll("brand")
-            const isActive = currentBrands.includes(brand.slug)
-            return (
-              <button
-                key={brand.slug}
-                onClick={() => {
-                  const next = isActive
-                    ? currentBrands.filter((b) => b !== brand.slug)
-                    : [...currentBrands, brand.slug]
-                  // Remove all brand params and re-set
-                  const updates: Record<string, string | null> = {}
-                  if (next.length === 0) {
-                    // We need to remove all brand params
-                    // Simplest: rebuild URL without brand params
+      <div className="border-b border-zinc-100 pb-4">
+        <button
+          onClick={() => toggleSection("brand")}
+          className="flex w-full items-center justify-between py-1"
+        >
+          <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            Brand
+          </span>
+          <div className="flex items-center gap-1.5">
+            {(() => {
+              const currentBrands = searchParams.getAll("brand")
+              if (currentBrands.length === 0) return null
+              if (currentBrands.length === 1) {
+                const name = brands.find((b) => b.slug === currentBrands[0])?.name ?? currentBrands[0]
+                return <span className="max-w-[100px] truncate text-[11px] text-zinc-700">{name}</span>
+              }
+              return (
+                <span className="text-[11px] text-zinc-700">
+                  {currentBrands.length} selected
+                </span>
+              )
+            })()}
+            {openSections.brand ? (
+              <ChevronUp className="size-3.5 text-zinc-400" />
+            ) : (
+              <ChevronDown className="size-3.5 text-zinc-400" />
+            )}
+          </div>
+        </button>
+        {openSections.brand && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {brands.map((brand) => {
+              const currentBrands = searchParams.getAll("brand")
+              const isActive = currentBrands.includes(brand.slug)
+              return (
+                <button
+                  key={brand.slug}
+                  onClick={() => {
+                    const next = isActive
+                      ? currentBrands.filter((b) => b !== brand.slug)
+                      : [...currentBrands, brand.slug]
+                    if (next.length === 0) {
+                      const params = new URLSearchParams(searchParams.toString())
+                      params.delete("brand")
+                      params.delete("page")
+                      const qs = params.toString()
+                      router.push(qs ? `/products?${qs}` : "/products")
+                      return
+                    }
                     const params = new URLSearchParams(searchParams.toString())
                     params.delete("brand")
                     params.delete("page")
-                    for (const [k, v] of Object.entries(updates)) {
-                      if (v) params.set(k, v)
-                    }
-                    const qs = params.toString()
-                    router.push(qs ? `/products?${qs}` : "/products")
-                    return
-                  }
-                  // For simplicity with multiple brand values,
-                  // build the URL manually
-                  const params = new URLSearchParams(searchParams.toString())
-                  params.delete("brand")
-                  params.delete("page")
-                  next.forEach((b) => params.append("brand", b))
-                  const qs = params.toString()
-                  router.push(qs ? `/products?${qs}` : "/products")
-                  setMobileOpen(false)
-                }}
-                className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
-                }`}
-              >
-                {brand.name}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div>
-          <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-            Tags
-          </label>
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => {
-              const currentTags = searchParams.getAll("tag")
-              const isActive = currentTags.includes(tag)
-              return (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    const params = new URLSearchParams(searchParams.toString())
-                    params.delete("tag")
-                    params.delete("page")
-                    const next = isActive
-                      ? currentTags.filter((t) => t !== tag)
-                      : [...currentTags, tag]
-                    next.forEach((t) => params.append("tag", t))
+                    next.forEach((b) => params.append("brand", b))
                     const qs = params.toString()
                     router.push(qs ? `/products?${qs}` : "/products")
                     setMobileOpen(false)
@@ -263,13 +277,70 @@ export function ProductFilters({
                       : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
                   }`}
                 >
-                  {tag}
+                  {brand.name}
                 </button>
               )
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Discover Collections */}
+      <div className="border-b border-zinc-100 pb-4">
+        <button
+          onClick={() => toggleSection("tags")}
+          className="flex w-full items-center justify-between py-1"
+        >
+          <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            Discover
+          </span>
+          <div className="flex items-center gap-1.5">
+            {(() => {
+              const sort = searchParams.get("sort")
+              if (!sort || sort === "popular") return null
+              const label = SORT_OPTIONS.find((o) => o.value === sort)?.label ?? sort
+              return (
+                <span className="max-w-[100px] truncate text-[11px] text-zinc-700">
+                  {label}
+                </span>
+              )
+            })()}
+            {openSections.tags ? (
+              <ChevronUp className="size-3.5 text-zinc-400" />
+            ) : (
+              <ChevronDown className="size-3.5 text-zinc-400" />
+            )}
+          </div>
+        </button>
+        {openSections.tags && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[
+              { value: "popular", label: "Best Sellers" },
+              { value: "newest", label: "New Arrivals" },
+              { value: "price_desc", label: "You may also like" },
+            ].map((item) => {
+              const currentSort = searchParams.get("sort") || "popular"
+              const isActive = currentSort === item.value
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => {
+                    navigate({ sort: isActive ? null : item.value })
+                    setMobileOpen(false)
+                  }}
+                  className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                    isActive
+                      ? "border-zinc-900 bg-zinc-900 text-white"
+                      : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Price Range */}
       <div>
@@ -339,10 +410,17 @@ export function ProductFilters({
 
           {/* Mobile filter button */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 h-7 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground lg:hidden">
-              <SlidersHorizontal className="size-3.5" />
-              Filters
-            </SheetTrigger>
+            <SheetTrigger
+              render={
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 h-7 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 lg:hidden"
+                >
+                  <SlidersHorizontal className="size-3.5" />
+                  Filters
+                </button>
+              }
+            />
             <SheetContent side="left" className="w-[320px] overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Filters</SheetTitle>

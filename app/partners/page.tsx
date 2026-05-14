@@ -2,11 +2,41 @@ import type { Metadata } from "next"
 // v2: force new function identity
 import Image from "next/image"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://findsengine.com"
+
+const HOW_TO_BUY_URLS: Record<string, string> = {
+  Kakobuy: "https://www.kakobuy.com/index/information?information_id=12",
+  Superbuy: "https://www.superbuy.com/cn/page/noviceguide/?htag=UserGuidance.cn.35186",
+  Oopbuy: "https://oopbuy.com/notice/1740290193167060994",
+  Acbuy: "https://www.acbuy.com/shopping-guide",
+  Mulebuy: "https://mulebuy.com/footer-help/buying-guide",
+  Allchinabuy: "https://www.allchinabuy.com/cn/page/noviceguide/?htag=banner_mainallchinabuy.cn.34564",
+  iTaobuy: "https://www.itaobuy.com/help/detail?namespaceCode=advertise&articleCode=new_user_guidelines",
+  USfans: "https://usfans.com/beginner-guide",
+  Hipobuy: "https://hipobuy.com/notice/1901853428167561218",
+  Litbuy: "https://litbuy.com/beginner-guide",
+  Sugargoo: "https://www.sugargoo.com/pages/view?businessType=menu&businessId=333551579728707633",
+  Hoobuy: "https://hoobuy.com/beginner-guide",
+}
+
+const SHOP_NOW_URLS: Record<string, string> = {
+  Kakobuy: "https://ikako.vip/r/sdv45",
+  Superbuy: "https://www.superbuy.com/cn/page/login/?partnercode=EH7LaP&type=register",
+  Oopbuy: "https://oopbuy.com/register?inviteCode=V7WQVRFKE",
+  Acbuy: "https://www.acbuy.com/login?loginStatus=register&code=X4U67L",
+  Mulebuy: "https://mulebuy.com/register?ref=201162142",
+  Allchinabuy: "https://www.allchinabuy.com/cn/page/login?partnercode=EH7LZu&type=register",
+  iTaobuy: "https://itaobuy.allapp.link/d81dud90b4mpqd4eqmdg",
+  USfans: "https://usfans.com/register?ref=YDDH2R",
+  Hipobuy: "https://hipobuy.com/register?inviteCode=WJJ658A4A",
+  Litbuy: "https://litbuy.com/register?inviteCode=JXT81I8DG",
+  Sugargoo: "https://www.sugargoo.com/register?memberId=3351269556942664886",
+  Hoobuy: "https://hoobuy.com?utm_source=website&utm_medium=ambassador&utm_campaign=linksharing&inviteCode=7EjOxnM8",
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -18,9 +48,7 @@ export const metadata: Metadata = {
 }
 
 export default async function AgentsPage() {
-  const supabase = await createClient()
-
-  const { data: platforms } = await supabase
+  const { data: platforms } = await supabaseAdmin
     .from("agent_platforms")
     .select("*")
     .eq("is_active", true)
@@ -50,7 +78,7 @@ export default async function AgentsPage() {
           Best Taobao &amp; 1688 Agents in 2026
         </h1>
         <p className="mt-2 text-base text-zinc-500">
-          Compare fees, shipping, QC and more across {agents.length > 0 ? agents.length : "top"} agent platforms.
+          Compare shipping, QC and more across {agents.length > 0 ? agents.length : "top"} agent platforms.
           Find the best platform to buy from China.
         </p>
       </div>
@@ -62,9 +90,8 @@ export default async function AgentsPage() {
             <thead>
               <tr className="border-b border-zinc-200">
                 <th className="pb-3 pr-4 font-semibold text-zinc-900">Platform</th>
-                <th className="hidden pb-3 pr-4 font-semibold text-zinc-900 sm:table-cell">Fee</th>
                 <th className="hidden pb-3 pr-4 font-semibold text-zinc-900 md:table-cell">Sources</th>
-                <th className="hidden pb-3 pr-4 font-semibold text-zinc-900 lg:table-cell">Highlights</th>
+                <th className="hidden pb-3 pr-4 font-semibold text-zinc-900 lg:table-cell">How to buy</th>
                 <th className="pb-3 text-right font-semibold text-zinc-900"></th>
               </tr>
             </thead>
@@ -106,18 +133,8 @@ export default async function AgentsPage() {
                           <span className="font-semibold text-zinc-900 group-hover:underline">
                             {agent.name}
                           </span>
-                          <span className="mt-0.5 block text-xs text-zinc-400 sm:hidden">
-                            {agent.fee_description || "View details"}
-                          </span>
                         </div>
                       </Link>
-                    </td>
-
-                    {/* Fee */}
-                    <td className="hidden py-4 pr-4 sm:table-cell">
-                      <span className="text-zinc-700">
-                        {agent.fee_description || "—"}
-                      </span>
                     </td>
 
                     {/* Supported sources */}
@@ -138,24 +155,46 @@ export default async function AgentsPage() {
                       )}
                     </td>
 
-                    {/* Highlights / CTA */}
+                    {/* How to buy */}
                     <td className="hidden py-4 pr-4 lg:table-cell">
-                      <Link
-                        href={`/partners/${agent.slug}`}
-                        className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
-                      >
-                        View Review →
-                      </Link>
+                      {HOW_TO_BUY_URLS[agent.name] ? (
+                        <a
+                          href={HOW_TO_BUY_URLS[agent.name]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+                        >
+                          View Now →
+                        </a>
+                      ) : (
+                        <Link
+                          href={`/partners/${agent.slug}`}
+                          className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline"
+                        >
+                          View Now →
+                        </Link>
+                      )}
                     </td>
 
                     {/* Visit button */}
                     <td className="py-4 text-right">
-                      <Link
-                        href={`/partners/${agent.slug}`}
-                        className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-                      >
-                        Shop Now
-                      </Link>
+                      {SHOP_NOW_URLS[agent.name] ? (
+                        <a
+                          href={SHOP_NOW_URLS[agent.name]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+                        >
+                          Shop Now
+                        </a>
+                      ) : (
+                        <Link
+                          href={`/partners/${agent.slug}`}
+                          className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+                        >
+                          Shop Now
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 )

@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
@@ -70,9 +69,8 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 // ── Page Component ───────────────────────────────────────────────────────
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const { slug } = await params
-  const supabase = await createClient()
 
-  const { data: post } = await supabase
+  const { data: post } = await supabaseAdmin
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
@@ -83,7 +81,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   // ── Parallel: related posts + author ─────────────────────────────────
   const [{ data: relatedPosts }, { data: authorData }] = await Promise.all([
-    supabase
+    supabaseAdmin
       .from("blog_posts")
       .select("*")
       .eq("status", "published")

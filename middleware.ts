@@ -49,7 +49,9 @@ export async function middleware(request: NextRequest) {
 
     // Admin route: check super_admin role
     if (isAdminRoute) {
-      const isAdmin = user.user_metadata?.role === "super_admin"
+      const isAdmin =
+        user.user_metadata?.role === "super_admin" ||
+        user.app_metadata?.role === "super_admin"
       if (!isAdmin) {
         return NextResponse.redirect(new URL("/", request.url))
       }

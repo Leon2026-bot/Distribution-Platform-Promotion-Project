@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 
@@ -42,9 +42,7 @@ function getCategoryEmoji(name: string): string {
 }
 
 export default async function CategoriesPage() {
-  const supabase = await createClient()
-
-  const { data: categories } = await supabase
+  const { data: categories } = await supabaseAdmin
     .from("categories")
     .select("id, name, slug, product_count, parent_id")
     .eq("status", "active")

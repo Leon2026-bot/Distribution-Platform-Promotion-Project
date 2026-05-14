@@ -1,4 +1,5 @@
 import type { Database } from "@/types/supabase"
+import { cnyToUsd } from "@/lib/price"
 
 type Product = Database["public"]["Tables"]["products"]["Row"]
 type AgentPlatform = Database["public"]["Tables"]["agent_platforms"]["Row"]
@@ -19,7 +20,7 @@ export function SchemaProduct({ product, platforms }: SchemaProductProps) {
     )
     ?.slice(0, 5)
 
-  const priceUsd = product.price_usd ?? product.price_cny / 7.2
+  const priceUsd = product.price_usd ?? cnyToUsd(product.price_cny ?? 0)
 
   const schema = {
     "@context": "https://schema.org",
