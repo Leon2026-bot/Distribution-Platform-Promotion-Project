@@ -49,19 +49,27 @@ export async function requireAuth() {
 
 /**
  * Check if the current user has super_admin role.
+ * Checks both user_metadata and app_metadata for compatibility.
  */
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser()
   if (!user) return false
-  return user.user_metadata?.role === "super_admin"
+  return (
+    user.user_metadata?.role === "super_admin" ||
+    user.app_metadata?.role === "super_admin"
+  )
 }
 
 /**
  * Require admin role. Throws if not admin.
+ * Checks both user_metadata and app_metadata for compatibility.
  */
 export async function requireAdmin() {
   const user = await getCurrentUser()
-  if (!user || user.user_metadata?.role !== "super_admin") {
+  const isAdminUser =
+    user?.user_metadata?.role === "super_admin" ||
+    user?.app_metadata?.role === "super_admin"
+  if (!user || !isAdminUser) {
     throw new Error("Forbidden: Admin access required")
   }
   return user

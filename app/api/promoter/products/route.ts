@@ -1,34 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 /**
  * GET /api/promoter/products
  * List all active products with "already_added" flag for current promoter.
  */
 export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("products")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const promoterId = promoter.id
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
   // Fetch all active products
-  const { data: products, error: productError } = await supabase
+  const { data: products, error: productError } = await serviceClient
     .from("products")
     .select("*")
     .eq("is_active", true)
@@ -39,7 +25,7 @@ export async function GET() {
   }
 
   // Fetch promoter's existing products
-  const { data: myProducts } = await supabase
+  const { data: myProducts } = await serviceClient
     .from("promoter_products")
     .select("product_id")
     .eq("promoter_id", promoterId)
@@ -61,26 +47,11 @@ export async function GET() {
  * Body: { product_ids: string[] }
  */
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("products")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const promoterId = promoter.id
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
   try {
     const body = await request.json()
@@ -94,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check existing
-    const { data: existing } = await supabase
+    const { data: existing } = await serviceClient
       .from("promoter_products")
       .select("product_id")
       .eq("promoter_id", promoterId)
@@ -114,7 +85,7 @@ export async function POST(request: NextRequest) {
         is_pinned: false,
       }))
 
-      const { error } = await supabase
+      const { error } = await serviceClient
         .from("promoter_products")
         .insert(inserts)
 

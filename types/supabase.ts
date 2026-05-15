@@ -599,6 +599,8 @@ export type Database = {
           default_platform_id: string | null
           display_name: string | null
           id: string
+          is_active: boolean | null
+          permissions: Json | null
           social_links: Json | null
           status: string | null
           theme_config: Json | null
@@ -614,6 +616,8 @@ export type Database = {
           default_platform_id?: string | null
           display_name?: string | null
           id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
           social_links?: Json | null
           status?: string | null
           theme_config?: Json | null
@@ -629,6 +633,8 @@ export type Database = {
           default_platform_id?: string | null
           display_name?: string | null
           id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
           social_links?: Json | null
           status?: string | null
           theme_config?: Json | null

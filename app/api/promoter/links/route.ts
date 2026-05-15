@@ -1,29 +1,18 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 /* ── GET: promoter links data ──────────────────────────────── */
 export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("links")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id, username")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
+  const username = access.promoter!.username
 
   // Get all active products (standard + custom)
-  const { data: products } = await supabase
+  const { data: products } = await serviceClient
     .from("promoter_products")
     .select(`
       id,
@@ -35,20 +24,20 @@ export async function GET() {
       is_pinned,
       product:product_id(title, slug, images, price_cny)
     `)
-    .eq("promoter_id", promoter.id)
+    .eq("promoter_id", promoterId)
     .eq("status", "active")
     .order("is_pinned", { ascending: false })
     .order("display_order", { ascending: true })
 
   // Get configured channels for platform-aware links
-  const { data: channels } = await supabase
+  const { data: channels } = await serviceClient
     .from("promoter_channels")
     .select("platform_id, member_id")
-    .eq("promoter_id", promoter.id)
+    .eq("promoter_id", promoterId)
     .eq("is_active", true)
 
   return NextResponse.json({
-    username: promoter.username,
+    username,
     products: products ?? [],
     channels: channels ?? [],
   })

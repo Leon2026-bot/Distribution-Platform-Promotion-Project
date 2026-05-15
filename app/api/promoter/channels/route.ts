@@ -1,54 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("settings")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const { data: channels } = await supabase
+  const { data: channels } = await serviceClient
     .from("promoter_channels")
     .select("*")
-    .eq("promoter_id", promoter.id)
+    .eq("promoter_id", promoterId)
     .eq("is_active", true)
+    .not("member_id", "is", null)
+    .neq("member_id", "")
 
   return NextResponse.json({ channels: channels ?? [] })
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("settings")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
   try {
     const body = await request.json()
@@ -57,25 +34,36 @@ export async function POST(request: NextRequest) {
       member_id: string
     }> = body.channels ?? []
 
-    // Upsert each channel
+    // Upsert or delete each channel based on member_id
     for (const ch of channels) {
-      if (!ch.platform_id || !ch.member_id?.trim()) continue
+      if (!ch.platform_id) continue
 
-      const { data: existing } = await supabase
+      const { data: existing } = await serviceClient
         .from("promoter_channels")
         .select("id")
-        .eq("promoter_id", promoter.id)
+        .eq("promoter_id", promoterId)
         .eq("platform_id", ch.platform_id)
-        .single()
+        .maybeSingle()
+
+      if (!ch.member_id?.trim()) {
+        // Empty member_id: delete existing record
+        if (existing) {
+          await serviceClient
+            .from("promoter_channels")
+            .delete()
+            .eq("id", existing.id)
+        }
+        continue
+      }
 
       if (existing) {
-        await supabase
+        await serviceClient
           .from("promoter_channels")
           .update({ member_id: ch.member_id.trim() })
           .eq("id", existing.id)
       } else {
-        await supabase.from("promoter_channels").insert({
-          promoter_id: promoter.id,
+        await serviceClient.from("promoter_channels").insert({
+          promoter_id: promoterId,
           platform_id: ch.platform_id,
           member_id: ch.member_id.trim(),
           is_active: true,

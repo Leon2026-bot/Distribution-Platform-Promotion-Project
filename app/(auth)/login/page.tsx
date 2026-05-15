@@ -21,7 +21,7 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -34,8 +34,8 @@ export default function LoginPage() {
 
     toast.success("Welcome back!")
 
-    // Check role and determine redirect target
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = signInData.user
+
     const isAdmin =
       user?.user_metadata?.role === "super_admin" ||
       user?.app_metadata?.role === "super_admin"
@@ -45,16 +45,13 @@ export default function LoginPage() {
       return
     }
 
-    // Promoter: get username and redirect to their shop
-    const { data: promoter } = await supabase
-      .from("promoters")
-      .select("username")
-      .eq("user_id", user?.id)
-      .single()
+    // Promoter: username is stored in user_metadata (avoids RLS issues on promoters table)
+    const username = user?.user_metadata?.username as string | undefined
 
-    if (promoter?.username) {
-      window.location.href = `/${promoter.username}`
+    if (username) {
+      window.location.href = `/promoter/dashboard/${username}`
     } else {
+      toast.error("No promoter username found in profile")
       window.location.href = "/"
     }
   }

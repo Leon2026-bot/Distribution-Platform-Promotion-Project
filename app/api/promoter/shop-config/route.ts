@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("settings")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
-  const { data: promoter } = await supabase
+  const { data: promoter } = await serviceClient
     .from("promoters")
     .select("display_name, bio, theme_config, banner_config")
-    .eq("user_id", user.id)
+    .eq("id", promoterId)
     .single()
 
   if (!promoter) {
@@ -36,30 +34,17 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("settings")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
   try {
     const body = await request.json()
     const config = body.config || {}
 
-    const { error } = await supabase
+    const { error } = await serviceClient
       .from("promoters")
       .update({
         display_name: config.display_name,
@@ -70,7 +55,7 @@ export async function POST(request: NextRequest) {
           subtitle: config.banner_subtitle,
         },
       })
-      .eq("id", promoter.id)
+      .eq("id", promoterId)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

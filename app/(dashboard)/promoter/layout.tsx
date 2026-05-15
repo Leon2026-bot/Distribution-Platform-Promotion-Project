@@ -14,16 +14,24 @@ import {
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { isModuleEnabled, type ModuleKey } from "@/lib/permissions"
 
-function getNavItems(username: string) {
+interface NavItem {
+  label: string
+  href: string
+  icon: React.ElementType
+  module: ModuleKey
+}
+
+function getNavItems(username: string): NavItem[] {
   return [
-    { label: "Dashboard", href: `/promoter/dashboard/${username}`, icon: LayoutDashboard },
-    { label: "Products", href: `/promoter/products/${username}`, icon: PackageSearch },
-    { label: "My Products", href: `/promoter/my-products/${username}`, icon: PackageCheck },
-    { label: "Custom", href: `/promoter/custom/${username}`, icon: PlusCircle },
-    { label: "Links", href: `/promoter/links/${username}`, icon: Link2 },
-    { label: "Settings", href: `/promoter/settings/${username}`, icon: Settings },
-    { label: "Decorate", href: `/promoter/decorate/${username}`, icon: Paintbrush },
+    { label: "Dashboard", href: `/promoter/dashboard/${username}`, icon: LayoutDashboard, module: "dashboard" },
+    { label: "Products", href: `/promoter/products/${username}`, icon: PackageSearch, module: "products" },
+    { label: "My Products", href: `/promoter/my-products/${username}`, icon: PackageCheck, module: "my_products" },
+    { label: "Custom", href: `/promoter/custom/${username}`, icon: PlusCircle, module: "custom" },
+    { label: "Links", href: `/promoter/links/${username}`, icon: Link2, module: "links" },
+    { label: "Settings", href: `/promoter/settings/${username}`, icon: Settings, module: "settings" },
+    { label: "Decorate", href: `/promoter/decorate/${username}`, icon: Paintbrush, module: "decorate" },
   ]
 }
 
@@ -56,19 +64,30 @@ export default async function PromoterLayout({
     redirect("/login")
   }
 
-  const navItems = getNavItems(promoter.username)
+  // Check account activation
+  if (promoter.is_active === false) {
+    redirect("/login?error=account_inactive")
+  }
 
-  const { data: channels } = await supabase
+  const allNavItems = getNavItems(promoter.username)
+  const permissions = promoter.permissions as Record<string, boolean> | null
+  const navItems = allNavItems.filter((item) =>
+    isModuleEnabled(permissions, item.module)
+  )
+
+  const { data: channels } = await serviceClient
     .from("promoter_channels")
     .select("*")
     .eq("promoter_id", promoter.id)
+    .eq("is_active", true)
 
-  const { data: allPlatforms } = await supabase
+  const { data: allPlatforms } = await serviceClient
     .from("agent_platforms")
     .select("*")
     .eq("is_active", true)
 
-  const configuredCount = channels?.length ?? 0
+  const configuredCount =
+    channels?.filter((c) => c.member_id?.trim().length > 0).length ?? 0
   const totalPlatforms = allPlatforms?.length ?? 0
   const missingChannels = totalPlatforms - configuredCount
 
@@ -161,7 +180,7 @@ export default async function PromoterLayout({
         </header>
 
         {/* Channel alert banner */}
-        {missingChannels > 0 && (
+        {missingChannels > 0 && isModuleEnabled(permissions, "settings") && (
           <div className="bg-red-50 px-4 py-2 text-sm text-red-700">
             <span className="font-medium">⚠️ Channel config incomplete.</span>{" "}
             You have {missingChannels} platform(s) without MemberID configured.{" "}

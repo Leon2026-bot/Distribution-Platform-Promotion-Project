@@ -1,31 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 /* ── GET: list custom products ─────────────────────────────── */
 export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("custom")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const { data: products } = await supabase
+  const { data: products } = await serviceClient
     .from("promoter_products")
     .select("id, custom_name, custom_price, custom_image, custom_url, custom_category, custom_tags, is_pinned, display_order, status, added_at")
-    .eq("promoter_id", promoter.id)
+    .eq("promoter_id", promoterId)
     .eq("product_type", "custom")
     .eq("status", "active")
     .order("is_pinned", { ascending: false })
@@ -37,24 +25,11 @@ export async function GET() {
 
 /* ── POST: create single custom product ────────────────────── */
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("custom")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
   const body = await req.json()
 
@@ -66,10 +41,10 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await serviceClient
     .from("promoter_products")
     .insert({
-      promoter_id: promoter.id,
+      promoter_id: promoterId,
       product_type: "custom",
       custom_name: body.custom_name.trim(),
       custom_price: Number(body.custom_price),

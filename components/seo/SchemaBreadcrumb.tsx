@@ -8,10 +8,17 @@ interface SchemaBreadcrumbProps {
 }
 
 export function SchemaBreadcrumb({ items }: SchemaBreadcrumbProps) {
+  const validItems = items.filter(
+    (item): item is BreadcrumbItem =>
+      item != null && typeof item.name === "string" && typeof item.url === "string"
+  )
+
+  if (validItems.length === 0) return null
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
+    itemListElement: validItems.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: item.name,

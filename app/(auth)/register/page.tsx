@@ -118,36 +118,37 @@ export default function RegisterPage() {
 
     // Create or update promoter profile
     const { data: userData } = await supabase.auth.getUser()
+    let promoterId = ""
     if (userData.user) {
-      await supabase.from("promoters").upsert(
-        {
-          user_id: userData.user.id,
-          username,
-          display_name: username,
-        },
-        { onConflict: "user_id" }
-      )
+      const { data: upserted } = await supabase
+        .from("promoters")
+        .upsert(
+          {
+            user_id: userData.user.id,
+            username,
+            display_name: username,
+          },
+          { onConflict: "user_id" }
+        )
+        .select("id")
+        .single()
+
+      if (upserted?.id) {
+        promoterId = upserted.id
+      }
     }
 
     // Save selected channels (only checked ones with non-empty member_id)
     const validChannels = selectedPlatforms.filter((s) => s.checked && s.member_id.trim())
-    if (validChannels.length > 0 && userData.user) {
-      const { data: promoter } = await supabase
-        .from("promoters")
-        .select("id")
-        .eq("user_id", userData.user.id)
-        .single()
-
-      if (promoter) {
-        await supabase.from("promoter_channels").insert(
-          validChannels.map((c) => ({
-            promoter_id: promoter.id,
-            platform_id: c.platform_id,
-            member_id: c.member_id.trim(),
-            is_active: true,
-          }))
-        )
-      }
+    if (validChannels.length > 0 && promoterId) {
+      await supabase.from("promoter_channels").insert(
+        validChannels.map((c) => ({
+          promoter_id: promoterId,
+          platform_id: c.platform_id,
+          member_id: c.member_id.trim(),
+          is_active: true,
+        }))
+      )
     }
 
     toast.success("Account created! Welcome aboard.")

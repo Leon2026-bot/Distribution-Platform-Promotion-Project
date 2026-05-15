@@ -1,30 +1,18 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const access = await checkPromoterAccess("my_products")
+  if (access.error) return access.error
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const serviceClient = createServiceClient()
+  const promoterId = access.promoter!.id
 
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const { data: products } = await supabase
+  const { data: products } = await serviceClient
     .from("promoter_products")
     .select("*, product:product_id(title, brand, price_cny, images, slug)")
-    .eq("promoter_id", promoter.id)
+    .eq("promoter_id", promoterId)
     .eq("status", "active")
     .order("is_pinned", { ascending: false })
     .order("display_order", { ascending: true })

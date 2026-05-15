@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
+import { checkPromoterAccess } from "@/lib/promoter-access"
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
+  const serviceClient = createServiceClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -14,8 +16,8 @@ export async function GET(request: NextRequest) {
   let promoterId: string
 
   if (username) {
-    // Lookup by username (used by both promoter dashboard and admin views)
-    const { data: promoter } = await supabase
+    // Lookup by username (used by admin views — no module permission check)
+    const { data: promoter } = await serviceClient
       .from("promoters")
       .select("id")
       .eq("username", username)
@@ -26,29 +28,17 @@ export async function GET(request: NextRequest) {
     }
     promoterId = promoter.id
   } else {
-    // Fallback: lookup by current user (backward compatibility)
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { data: promoter } = await supabase
-      .from("promoters")
-      .select("id")
-      .eq("user_id", user.id)
-      .single()
-
-    if (!promoter) {
-      return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-    }
-    promoterId = promoter.id
+    // Session-based access — check permissions
+    const access = await checkPromoterAccess("dashboard")
+    if (access.error) return access.error
+    promoterId = access.promoter!.id
   }
 
   // Parse date range
-  const { searchParams } = new URL(request.url)
   const from = searchParams.get("from")
   const to = searchParams.get("to")
 
-  let query = supabase
+  let query = serviceClient
     .from("click_events")
     .select("*")
     .eq("promoter_id", promoterId)
@@ -105,7 +95,7 @@ export async function GET(request: NextRequest) {
   let topProducts: Array<{ id: string; title: string; clicks: number }> = []
 
   if (topProductIds.length > 0) {
-    const { data: products } = await supabase
+    const { data: products } = await serviceClient
       .from("products")
       .select("id, title")
       .in("id", topProductIds)

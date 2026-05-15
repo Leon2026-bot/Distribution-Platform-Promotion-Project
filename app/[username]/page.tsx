@@ -71,7 +71,10 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
   return (
     <>
       <SchemaBreadcrumb
-        items={[{ name: "Home", url: "/" }, { name: promoter.display_name || promoter.username }]}
+        items={[
+          { name: "Home", url: "/" },
+          { name: promoter.display_name || promoter.username, url: `/${username}` },
+        ]}
       />
 
       <div className="flex flex-col">
