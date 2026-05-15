@@ -59,8 +59,9 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
   const platformMap = new Map(platforms?.map((p) => [p.id, p]) ?? [])
   const activePlatforms =
     channels
+      ?.filter((c): c is typeof c & { platform_id: string } => !!c.platform_id)
       ?.map((c) => platformMap.get(c.platform_id))
-      .filter(Boolean) ?? []
+      .filter((p): p is NonNullable<typeof p> => !!p) ?? []
 
   // Extract products from promoter_products join
   const products =
