@@ -7,7 +7,7 @@ import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { createClient } from "@/lib/supabase/client"
 import type { Database } from "@/types/supabase"
 
@@ -18,11 +18,17 @@ interface ChannelConfig {
   member_id: string
 }
 
+interface PlatformSelection {
+  platform_id: string
+  checked: boolean
+  member_id: string
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState<1 | 3 | 4>(1)
   const [platforms, setPlatforms] = useState<AgentPlatform[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -30,13 +36,9 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [username, setUsername] = useState("")
-  const [displayName, setDisplayName] = useState("")
 
-  // Step 2: Profile
-  const [bio, setBio] = useState("")
-
-  // Step 3: Channels
-  const [channels, setChannels] = useState<ChannelConfig[]>([])
+  // Step 3: Platforms (optional, per-checkbox)
+  const [selectedPlatforms, setSelectedPlatforms] = useState<PlatformSelection[]>([])
 
   // Fetch platforms on mount
   useEffect(() => {
@@ -47,8 +49,8 @@ export default function RegisterPage() {
       .then(({ data }) => {
         if (data) {
           setPlatforms(data)
-          setChannels(
-            data.map((p) => ({ platform_id: p.id, member_id: "" }))
+          setSelectedPlatforms(
+            data.map((p) => ({ platform_id: p.id, checked: false, member_id: "" }))
           )
         }
       })
@@ -71,11 +73,7 @@ export default function RegisterPage() {
     return ""
   })()
 
-  const canProceedStep1 =
-    email &&
-    !usernameError &&
-    !passwordError &&
-    displayName.length >= 1
+  const canProceedStep1 = email && !usernameError && !passwordError
 
   // Check username uniqueness
   const checkUsername = async () => {
@@ -107,7 +105,7 @@ export default function RegisterPage() {
       options: {
         data: {
           username,
-          display_name: displayName,
+          display_name: username,
         },
       },
     })
@@ -121,18 +119,18 @@ export default function RegisterPage() {
     // Create or update promoter profile
     const { data: userData } = await supabase.auth.getUser()
     if (userData.user) {
-      await supabase
-        .from("promoters")
-        .upsert({
+      await supabase.from("promoters").upsert(
+        {
           user_id: userData.user.id,
           username,
-          display_name: displayName,
-          bio,
-        }, { onConflict: "user_id" })
+          display_name: username,
+        },
+        { onConflict: "user_id" }
+      )
     }
 
-    // Save channels
-    const validChannels = channels.filter((c) => c.member_id.trim())
+    // Save selected channels (only checked ones with non-empty member_id)
+    const validChannels = selectedPlatforms.filter((s) => s.checked && s.member_id.trim())
     if (validChannels.length > 0 && userData.user) {
       const { data: promoter } = await supabase
         .from("promoters")
@@ -157,13 +155,27 @@ export default function RegisterPage() {
     setStep(4)
   }
 
+  const togglePlatform = (platformId: string, checked: boolean) => {
+    setSelectedPlatforms((prev) =>
+      prev.map((p) => (p.platform_id === platformId ? { ...p, checked } : p))
+    )
+  }
+
+  const updateMemberId = (platformId: string, memberId: string) => {
+    setSelectedPlatforms((prev) =>
+      prev.map((p) => (p.platform_id === platformId ? { ...p, member_id: memberId } : p))
+    )
+  }
+
   // ── Render ────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-zinc-900">Create Account</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Step {step} of 3 — {step === 1 ? "Account" : step === 2 ? "Profile" : "Channels"}
+          {step === 1 && "Step 1 of 2 — Account"}
+          {step === 3 && "Step 2 of 2 — Connect Agents (Optional)"}
+          {step === 4 && "Done!"}
         </p>
       </div>
 
@@ -199,17 +211,6 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              placeholder="Your Name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -227,80 +228,86 @@ export default function RegisterPage() {
           <Button
             className="w-full"
             disabled={!canProceedStep1}
-            onClick={() => setStep(2)}
+            onClick={() => setStep(3)}
           >
             Next →
           </Button>
         </div>
       )}
 
-      {/* Step 2: Profile */}
-      {step === 2 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio (optional)</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell us about yourself..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
-              ← Back
-            </Button>
-            <Button className="flex-1" onClick={() => setStep(3)}>
-              Next →
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Channels */}
+      {/* Step 3: Connect Agents (optional) */}
       {step === 3 && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <p className="text-sm text-zinc-500">
-            Add your Member IDs to earn commissions. You can skip and configure later.
+            Please select an agent and enter your exclusive affiliate invitation code to start earning agent commissions.
+            Optional — You can also set this up later.
           </p>
 
-          {platforms.map((platform, idx) => (
-            <div key={platform.id} className="space-y-1.5">
-              <Label className="flex items-center gap-2 text-sm">
-                {platform.logo_url ? (
-                  <img
-                    src={
-                      platform.logo_url.startsWith("http")
-                        ? platform.logo_url
-                        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/partners/${platform.logo_url}`
-                    }
-                    alt={platform.name}
-                    className="h-4 w-auto object-contain"
-                  />
-                ) : null}
-                {platform.name}
-                {channels[idx]?.member_id?.trim() ? (
-                  <span className="text-green-500">✓</span>
-                ) : (
-                  <span className="text-amber-500">⚠</span>
-                )}
-              </Label>
-              <Input
-                placeholder={`Your ${platform.name} Member ID`}
-                value={channels[idx]?.member_id || ""}
-                onChange={(e) => {
-                  const updated = [...channels]
-                  updated[idx] = { ...updated[idx], member_id: e.target.value }
-                  setChannels(updated)
-                }}
-              />
-            </div>
-          ))}
+          {/* Agent platforms grid */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {platforms.map((platform) => {
+              const sel = selectedPlatforms.find((s) => s.platform_id === platform.id)
+              const isChecked = sel?.checked ?? false
+              return (
+                <div
+                  key={platform.id}
+                  className={`rounded-lg border p-3 transition-colors ${
+                    isChecked
+                      ? "border-zinc-900 bg-zinc-50"
+                      : "border-zinc-200 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Checkbox
+                      id={`platform-${platform.id}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) =>
+                        togglePlatform(platform.id, checked === true)
+                      }
+                    />
+                    <label
+                      htmlFor={`platform-${platform.id}`}
+                      className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-800"
+                    >
+                      {platform.logo_url ? (
+                        <img
+                          src={
+                            platform.logo_url.startsWith("http")
+                              ? platform.logo_url
+                              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/partners/${platform.logo_url}`
+                          }
+                          alt={platform.name}
+                          className="h-4 w-auto object-contain"
+                        />
+                      ) : null}
+                      {platform.name}
+                    </label>
+                  </div>
+
+                  {isChecked && (
+                    <div className="mt-2.5 pl-6">
+                      <Input
+                        size={1}
+                        placeholder="Code"
+                        value={sel?.member_id || ""}
+                        onChange={(e) =>
+                          updateMemberId(platform.id, e.target.value)
+                        }
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setStep(1)}
+            >
               ← Back
             </Button>
             <Button
@@ -331,7 +338,10 @@ export default function RegisterPage() {
           <p className="text-sm text-zinc-500">
             Your account has been created. Redirecting to dashboard...
           </p>
-          <Button className="w-full" onClick={() => router.push("/promoter/dashboard")}>
+          <Button
+            className="w-full"
+            onClick={() => router.push("/promoter/dashboard")}
+          >
             Go to Dashboard
           </Button>
         </div>

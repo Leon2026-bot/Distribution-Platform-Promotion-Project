@@ -13,6 +13,7 @@ interface ProductCardProps {
     platform_count?: number
   }
   sort?: string
+  refParam?: string
 }
 
 function getBadge(product: ProductRow, sort?: string) {
@@ -37,7 +38,7 @@ function getBadge(product: ProductRow, sort?: string) {
   return null
 }
 
-export function ProductCard({ product, sort }: ProductCardProps) {
+export function ProductCard({ product, sort, refParam }: ProductCardProps) {
   const rawImage = product.images?.[0] ?? null
   const imageUrl =
     !rawImage
@@ -55,9 +56,13 @@ export function ProductCard({ product, sort }: ProductCardProps) {
 
   const badge = getBadge(product, sort)
 
+  const productHref = refParam
+    ? `/products/${product.slug}?${refParam}`
+    : `/products/${product.slug}`
+
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={productHref}
       className="group block overflow-hidden rounded-xl border border-zinc-100 bg-white transition-all duration-200 hover:border-zinc-200 hover:shadow-md"
     >
       {/* Image - 1:1 ratio */}

@@ -1,27 +1,44 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const { searchParams } = new URL(request.url)
+  const username = searchParams.get("username")
+
+  let promoterId: string
+
+  if (username) {
+    const { data: promoter } = await supabase
+      .from("promoters")
+      .select("id")
+      .eq("username", username)
+      .single()
+
+    if (!promoter) {
+      return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
+    }
+    promoterId = promoter.id
+  } else {
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: promoter } = await supabase
+      .from("promoters")
+      .select("id")
+      .eq("user_id", user.id)
+      .single()
+
+    if (!promoter) {
+      return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
+    }
+    promoterId = promoter.id
   }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const promoterId = promoter.id
 
   const [
     { count: productCount },

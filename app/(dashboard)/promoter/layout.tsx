@@ -15,15 +15,17 @@ import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
-const navItems = [
-  { label: "Dashboard", href: "/promoter/dashboard", icon: LayoutDashboard },
-  { label: "Products", href: "/promoter/products", icon: PackageSearch },
-  { label: "My Products", href: "/promoter/my-products", icon: PackageCheck },
-  { label: "Custom", href: "/promoter/custom", icon: PlusCircle },
-  { label: "Links", href: "/promoter/links", icon: Link2 },
-  { label: "Settings", href: "/promoter/settings", icon: Settings },
-  { label: "Decorate", href: "/promoter/decorate", icon: Paintbrush },
-]
+function getNavItems(username: string) {
+  return [
+    { label: "Dashboard", href: `/promoter/dashboard/${username}`, icon: LayoutDashboard },
+    { label: "Products", href: `/promoter/products/${username}`, icon: PackageSearch },
+    { label: "My Products", href: `/promoter/my-products/${username}`, icon: PackageCheck },
+    { label: "Custom", href: `/promoter/custom/${username}`, icon: PlusCircle },
+    { label: "Links", href: `/promoter/links/${username}`, icon: Link2 },
+    { label: "Settings", href: `/promoter/settings/${username}`, icon: Settings },
+    { label: "Decorate", href: `/promoter/decorate/${username}`, icon: Paintbrush },
+  ]
+}
 
 export default async function PromoterLayout({
   children,
@@ -40,7 +42,6 @@ export default async function PromoterLayout({
   }
 
   // Use service client to bypass RLS for promoter lookup
-  // User identity is already verified above via getUser()
   const serviceClient = createServiceClient()
   const {
     data: promoter,
@@ -52,57 +53,10 @@ export default async function PromoterLayout({
     .maybeSingle()
 
   if (!promoter || promoterError) {
-    // Diagnostic mode: show error instead of silent redirect
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-6">
-        <div className="max-w-lg rounded-lg border border-red-200 bg-white p-6 shadow-sm">
-          <h1 className="mb-4 text-lg font-bold text-red-700">
-            Promoter 查询失败
-          </h1>
-          <div className="space-y-3 text-sm">
-            <div>
-              <span className="font-semibold text-zinc-700">当前 User ID:</span>
-              <code className="mt-1 block rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-900">
-                {user.id}
-              </code>
-            </div>
-            <div>
-              <span className="font-semibold text-zinc-700">User Email:</span>
-              <code className="mt-1 block rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-900">
-                {user.email}
-              </code>
-            </div>
-            {promoterError && (
-              <div>
-                <span className="font-semibold text-zinc-700">查询错误:</span>
-                <code className="mt-1 block rounded bg-red-50 px-2 py-1 text-xs text-red-800">
-                  {promoterError.message} (code: {promoterError.code})
-                </code>
-              </div>
-            )}
-            {!promoterError && (
-              <div className="text-red-700">
-                promoters 表中找不到 user_id 匹配的记录。
-              </div>
-            )}
-            <hr className="border-zinc-200" />
-            <p className="text-zinc-500">
-              请把上面 User ID 复制到 Supabase SQL Editor 执行：
-            </p>
-            <code className="block rounded bg-zinc-900 px-3 py-2 text-xs text-green-400">
-              SELECT * FROM promoters WHERE user_id = &apos;{user.id}&apos;;
-            </code>
-            <a
-              href="/login"
-              className="inline-block text-sm text-zinc-900 underline"
-            >
-              返回登录页
-            </a>
-          </div>
-        </div>
-      </div>
-    )
+    redirect("/login")
   }
+
+  const navItems = getNavItems(promoter.username)
 
   const { data: channels } = await supabase
     .from("promoter_channels")
@@ -212,7 +166,7 @@ export default async function PromoterLayout({
             <span className="font-medium">⚠️ Channel config incomplete.</span>{" "}
             You have {missingChannels} platform(s) without MemberID configured.{" "}
             <Link
-              href="/promoter/settings"
+              href={`/promoter/settings/${promoter.username}`}
               className="font-medium underline underline-offset-2"
             >
               Configure Now

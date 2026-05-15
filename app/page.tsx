@@ -370,20 +370,11 @@ export default async function Home() {
             <p className="mx-auto mt-2 max-w-md text-sm text-zinc-400">
               Browse our full catalog and find the best deals across all agents.
             </p>
-            <div className="mt-6 flex items-center justify-center gap-3">
+            <div className="mt-6 flex items-center justify-center">
               <Link href="/products">
                 <Button size="lg">
                   Browse Products
                   <ArrowRight className="ml-1 size-4" />
-                </Button>
-              </Link>
-              <Link href="/partners">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-zinc-700 text-white hover:bg-zinc-800 hover:text-white"
-                >
-                  Compare Agents
                 </Button>
               </Link>
             </div>

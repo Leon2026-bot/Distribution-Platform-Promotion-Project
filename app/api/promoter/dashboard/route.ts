@@ -7,21 +7,41 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  // Parse query params
+  const { searchParams } = new URL(request.url)
+  const username = searchParams.get("username")
+
+  let promoterId: string
+
+  if (username) {
+    // Lookup by username (used by both promoter dashboard and admin views)
+    const { data: promoter } = await supabase
+      .from("promoters")
+      .select("id")
+      .eq("username", username)
+      .single()
+
+    if (!promoter) {
+      return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
+    }
+    promoterId = promoter.id
+  } else {
+    // Fallback: lookup by current user (backward compatibility)
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { data: promoter } = await supabase
+      .from("promoters")
+      .select("id")
+      .eq("user_id", user.id)
+      .single()
+
+    if (!promoter) {
+      return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
+    }
+    promoterId = promoter.id
   }
-
-  const { data: promoter } = await supabase
-    .from("promoters")
-    .select("id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!promoter) {
-    return NextResponse.json({ error: "Promoter not found" }, { status: 404 })
-  }
-
-  const promoterId = promoter.id
 
   // Parse date range
   const { searchParams } = new URL(request.url)

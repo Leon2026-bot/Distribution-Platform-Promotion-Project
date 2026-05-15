@@ -39,10 +39,13 @@ export async function middleware(request: NextRequest) {
   // Protected routes
   const isPromoterRoute = pathname.startsWith("/promoter")
   const isAdminRoute = pathname.startsWith("/admin")
+  const isAdminLogin = pathname === "/admin/login"
 
-  if (isPromoterRoute || isAdminRoute) {
+  if ((isPromoterRoute || isAdminRoute) && !isAdminLogin) {
     if (!user) {
-      const loginUrl = new URL("/login", request.url)
+      const loginUrl = isAdminRoute
+        ? new URL("/admin/login", request.url)
+        : new URL("/login", request.url)
       loginUrl.searchParams.set("redirect", pathname)
       return NextResponse.redirect(loginUrl)
     }

@@ -45,6 +45,15 @@ export function Header() {
 
   const isDashboard = pathname.startsWith("/promoter") || pathname.startsWith("/admin")
 
+  // Check if current page is a promoter's shop page (/{username})
+  const pathSegments = pathname.split("/").filter(Boolean)
+  const firstSegment = pathSegments[0] ?? ""
+  const knownRoutes = [
+    "products", "brands", "blog", "search", "login", "register",
+    "category", "brand", "partners", "admin", "promoter", "api", "auth",
+  ]
+  const isPromoterShop = pathSegments.length >= 1 && !knownRoutes.includes(firstSegment)
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -132,20 +141,35 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
+              {!isPromoterShop && (
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+              <Link href="/register">
+                <Button size="sm">Register</Button>
               </Link>
             </>
           )}
 
           {isDashboard && (
-            <a href="http://localhost:3002/" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                Access Frontend
-              </Button>
-            </a>
+            (() => {
+              // Extract username from /promoter/*/{username} URL
+              const segments = pathname.split("/").filter(Boolean)
+              const username = segments.length >= 3 && segments[0] === "promoter"
+                ? segments[segments.length - 1]
+                : null
+              const frontendUrl = username ? `/${username}` : "/"
+              return (
+                <a href={frontendUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm">
+                    Access Frontend
+                  </Button>
+                </a>
+              )
+            })()
           )}
         </div>
 
@@ -246,6 +270,13 @@ export function Header() {
                 className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
               >
                 Sign In
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
+              >
+                Register
               </Link>
             </nav>
           </div>

@@ -34,13 +34,29 @@ export default function LoginPage() {
 
     toast.success("Welcome back!")
 
-    // Check role and open dashboard in a new tab
+    // Check role and determine redirect target
     const { data: { user } } = await supabase.auth.getUser()
     const isAdmin =
       user?.user_metadata?.role === "super_admin" ||
       user?.app_metadata?.role === "super_admin"
-    const dashboardUrl = isAdmin ? "/admin/dashboard" : "/promoter/dashboard"
-    window.open(dashboardUrl, "_blank")
+
+    if (isAdmin) {
+      window.location.href = "/admin/dashboard"
+      return
+    }
+
+    // Promoter: get username and redirect to their shop
+    const { data: promoter } = await supabase
+      .from("promoters")
+      .select("username")
+      .eq("user_id", user?.id)
+      .single()
+
+    if (promoter?.username) {
+      window.location.href = `/${promoter.username}`
+    } else {
+      window.location.href = "/"
+    }
   }
 
   const handleGoogleLogin = async () => {
