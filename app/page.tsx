@@ -15,6 +15,13 @@ const categories = [
   { label: "Electronics", slug: "electronics", icon: "📱" },
 ]
 
+/** Format a count number into a human-readable string with "+" suffix.
+ *  e.g. 15000 → "15,000+", 380 → "380+"
+ */
+function formatCount(n: number): string {
+  return n.toLocaleString("en-US") + "+"
+}
+
 export default async function Home() {
   // Parallel data fetching
   const [
@@ -23,6 +30,8 @@ export default async function Home() {
     { data: popularProducts },
     { data: platforms },
     { data: blogPosts },
+    productCountResult,
+    brandCountResult,
   ] = await Promise.all([
     // Hot Brands: 12 active, ordered by product_count desc
     supabaseAdmin
@@ -63,9 +72,23 @@ export default async function Home() {
       .not("published_at", "is", null)
       .order("published_at", { ascending: false })
       .limit(3),
+
+    // Total active products count
+    supabaseAdmin
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true),
+
+    // Total active brands count
+    supabaseAdmin
+      .from("brands")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active"),
   ])
 
   const activeProducts = newProducts || []
+  const totalProducts = productCountResult?.count ?? 0
+  const totalBrands = brandCountResult?.count ?? 0
 
   return (
     <>
@@ -106,9 +129,9 @@ export default async function Home() {
 
             {/* Trust Bar */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-400 sm:text-sm">
-              <span>15,000+ Products</span>
+              <span>{formatCount(totalProducts)} Products</span>
               <span className="hidden sm:inline">&middot;</span>
-              <span>380+ Brands</span>
+              <span>{formatCount(totalBrands)} Brands</span>
               <span className="hidden sm:inline">&middot;</span>
               <span>{platforms?.length || 5} Platforms</span>
             </div>

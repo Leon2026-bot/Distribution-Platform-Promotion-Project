@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Pencil, Ban, CheckCircle, Eye, MousePointerClick, Package, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import {
   Table,
   TableBody,
@@ -21,7 +20,6 @@ interface Promoter {
   username: string
   display_name: string | null
   status: string | null
-  is_active: boolean | null
   permissions: Record<string, boolean> | null
   created_at: string | null
   total_clicks: number
@@ -67,27 +65,14 @@ export default function AdminPromotersPage() {
 
   const toggleStatus = async (id: string, current: string | null) => {
     const newStatus = current === "active" ? "suspended" : "active"
+    const isActive = newStatus === "active"
     const res = await fetch(`/api/admin/promoters/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify({ status: newStatus, is_active: isActive }),
     })
     if (res.ok) {
       toast.success(`Promoter ${newStatus}`)
-      fetchPromoters()
-    } else {
-      toast.error("Failed")
-    }
-  }
-
-  const toggleActive = async (id: string, current: boolean | null) => {
-    const res = await fetch(`/api/admin/promoters/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_active: !current }),
-    })
-    if (res.ok) {
-      toast.success(`Promoter ${!current ? "activated" : "deactivated"}`)
       fetchPromoters()
     } else {
       toast.error("Failed")
@@ -110,7 +95,6 @@ export default function AdminPromotersPage() {
               <TableHead>Promoter</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Stats</TableHead>
-              <TableHead>Active</TableHead>
               <TableHead>Joined</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -119,7 +103,7 @@ export default function AdminPromotersPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={5}>
                     <div className="h-8 animate-pulse rounded bg-zinc-100" />
                   </TableCell>
                 </TableRow>
@@ -145,7 +129,7 @@ export default function AdminPromotersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={p.status === "active" ? "default" : "secondary"}>
+                    <Badge variant={p.status === "active" ? "default" : p.status === "suspended" ? "destructive" : "secondary"}>
                       {p.status || "unknown"}
                     </Badge>
                   </TableCell>
@@ -164,12 +148,6 @@ export default function AdminPromotersPage() {
                         {p.total_channels}
                       </span>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={p.is_active ?? true}
-                      onCheckedChange={() => toggleActive(p.id, p.is_active)}
-                    />
                   </TableCell>
                   <TableCell className="text-zinc-500">
                     {p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"}

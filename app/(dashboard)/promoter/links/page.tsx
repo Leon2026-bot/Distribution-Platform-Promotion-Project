@@ -11,6 +11,7 @@ import {
   Link as LinkIcon,
   Check,
   FileSpreadsheet,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,6 +38,15 @@ interface LinkProduct {
   } | null
 }
 
+interface ShortLink {
+  id: string
+  short_code: string
+  final_url: string
+  product_id: string
+  click_count: number
+  created_at: string
+}
+
 interface Channel {
   platform_id: string
   member_id: string
@@ -45,19 +55,24 @@ interface Channel {
 export default function LinksPage() {
   const [username, setUsername] = useState("")
   const [products, setProducts] = useState<LinkProduct[]>([])
+  const [shortLinks, setShortLinks] = useState<ShortLink[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [showQrDialog, setShowQrDialog] = useState(false)
+  const [generatingId, setGeneratingId] = useState<string | null>(null)
 
   const siteUrl = typeof window !== "undefined" ? window.location.origin : ""
 
   useEffect(() => {
-    fetch("/api/promoter/links")
-      .then((r) => r.json())
-      .then((data) => {
-        setUsername(data.username ?? "")
-        setProducts(data.products ?? [])
+    Promise.all([
+      fetch("/api/promoter/links").then((r) => r.json()),
+      fetch("/api/promoter/short-links").then((r) => r.json()),
+    ])
+      .then(([linksData, shortLinksData]) => {
+        setUsername(linksData.username ?? "")
+        setProducts(linksData.products ?? [])
+        setShortLinks(shortLinksData.links ?? [])
         setLoading(false)
       })
       .catch(() => {
@@ -85,13 +100,44 @@ export default function LinksPage() {
     return `${siteUrl}/products/${slug}?ref=${username}`
   }
 
+  /** Look up the real short link for a product from the database */
   const getShortLink = (p: LinkProduct) => {
-    // Use a simple hash-based short code
+    const shortLink = shortLinks.find((sl) => sl.product_id === p.id)
+    if (shortLink) {
+      return `${siteUrl}/r/${shortLink.short_code}`
+    }
+    return null
+  }
+
+  /** Generate a short link for a product */
+  const handleGenerateShortLink = async (p: LinkProduct) => {
     const slug = getProductSlug(p)
-    if (!slug) return "#"
-    // Short code: first 6 chars of product id + username
-    const shortCode = `${p.id.slice(0, 6)}-${username}`
-    return `${siteUrl}/r/${shortCode}`
+    if (!slug) return
+
+    setGeneratingId(p.id)
+    try {
+      const res = await fetch("/api/promoter/short-links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_id: p.id,
+          product_slug: slug,
+        }),
+      })
+
+      if (res.ok) {
+        const newLink = await res.json()
+        setShortLinks((prev) => [...prev, newLink])
+        toast.success("Short link created")
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to create short link")
+      }
+    } catch {
+      toast.error("Failed to create short link")
+    } finally {
+      setGeneratingId(null)
+    }
   }
 
   const copyToClipboard = async (text: string, id: string) => {
@@ -134,7 +180,7 @@ export default function LinksPage() {
       price: getProductPrice(p),
       shop_link: getShopLink(),
       product_link: getProductLink(p),
-      short_link: getShortLink(p),
+      short_link: getShortLink(p) || getProductLink(p),
     }))
 
     if (rows.length === 0) {
@@ -313,6 +359,8 @@ export default function LinksPage() {
                             )}
                           </button>
                         </div>
+                        {/* Short link row */}
+                        {shortLink ? (
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-medium text-zinc-300 uppercase">
                             Short
@@ -331,6 +379,22 @@ export default function LinksPage() {
                             )}
                           </button>
                         </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[10px] px-2"
+                              onClick={() => handleGenerateShortLink(item)}
+                              disabled={generatingId === item.id}
+                            >
+                              {generatingId === item.id ? (
+                                <Loader2 className="mr-1 size-3 animate-spin" />
+                              ) : null}
+                              Generate Short Link
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <p className="mt-2 text-xs text-zinc-400">

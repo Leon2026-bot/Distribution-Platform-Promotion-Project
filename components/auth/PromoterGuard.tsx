@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
-import { useParams } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 interface PromoterGuardProps {
@@ -11,6 +11,8 @@ interface PromoterGuardProps {
 export function PromoterGuard({ children }: PromoterGuardProps) {
   const params = useParams()
   const urlUsername = params.username as string | undefined
+  const pathname = usePathname()
+  const router = useRouter()
   const [state, setState] = useState<"loading" | "verified" | "error">("loading")
   const [errorMsg, setErrorMsg] = useState("")
   const supabase = createClient()
@@ -23,8 +25,12 @@ export function PromoterGuard({ children }: PromoterGuardProps) {
       if (cancelled) return
 
       if (!user) {
-        setErrorMsg("Not authenticated")
+        setErrorMsg("Not authenticated. Redirecting to login...")
         setState("error")
+        const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`
+        setTimeout(() => {
+          if (!cancelled) router.push(redirectUrl)
+        }, 1500)
         return
       }
 
@@ -36,8 +42,12 @@ export function PromoterGuard({ children }: PromoterGuardProps) {
       }
 
       if (username !== urlUsername) {
-        setErrorMsg("Access denied: username mismatch")
+        setErrorMsg("Access denied: username mismatch. Redirecting to login...")
         setState("error")
+        const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}&error=access_denied`
+        setTimeout(() => {
+          if (!cancelled) router.push(redirectUrl)
+        }, 1500)
         return
       }
 
@@ -46,7 +56,7 @@ export function PromoterGuard({ children }: PromoterGuardProps) {
 
     verify()
     return () => { cancelled = true }
-  }, [urlUsername])
+  }, [urlUsername, pathname, router])
 
   if (state === "error") {
     return (

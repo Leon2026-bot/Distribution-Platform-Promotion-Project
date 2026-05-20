@@ -109,10 +109,29 @@ export async function GET(request: NextRequest) {
     }))
   }
 
+  // Fetch product titles for click_details
+  const clickProductIds = [...new Set(clickList.map((c) => c.product_id).filter(Boolean))] as string[]
+
+  let productTitleMap = new Map<string, string>()
+
+  if (clickProductIds.length > 0) {
+    const { data: clickProducts } = await serviceClient
+      .from("products")
+      .select("id, title")
+      .in("id", clickProductIds)
+
+    productTitleMap = new Map(clickProducts?.map((p) => [p.id, p.title]) ?? [])
+  }
+
+  const clickDetails = clickList.slice(0, 20).map((click) => ({
+    ...click,
+    product_title: click.product_id ? (productTitleMap.get(click.product_id) ?? null) : null,
+  }))
+
   return NextResponse.json({
     total_clicks: totalClicks,
     trend_data: trendData,
     top_products: topProducts,
-    click_details: clickList.slice(0, 20),
+    click_details: clickDetails,
   })
 }

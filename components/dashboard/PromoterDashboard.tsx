@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import {
   MousePointerClick,
@@ -9,6 +9,13 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface DashboardData {
   total_clicks: number
@@ -18,6 +25,7 @@ interface DashboardData {
     id: string
     event_type: string
     product_id: string | null
+    product_title: string | null
     platform_id: string | null
     created_at: string | null
   }>
@@ -33,14 +41,58 @@ interface PromoterDashboardProps {
   username: string
 }
 
+const timeRanges = [
+  { label: "All Time", value: "all" },
+  { label: "Today", value: "today" },
+  { label: "Last 7 Days", value: "7d" },
+  { label: "Last 30 Days", value: "30d" },
+  { label: "This Month", value: "month" },
+]
+
+function getDateRange(value: string): { from?: string; to?: string } {
+  const now = new Date()
+  const to = now.toISOString().split("T")[0]
+
+  switch (value) {
+    case "today": {
+      const from = to
+      return { from, to }
+    }
+    case "7d": {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 7)
+      return { from: d.toISOString().split("T")[0], to }
+    }
+    case "30d": {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 30)
+      return { from: d.toISOString().split("T")[0], to }
+    }
+    case "month": {
+      const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
+      return { from, to }
+    }
+    default:
+      return {}
+  }
+}
+
 export function PromoterDashboard({ username }: PromoterDashboardProps) {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
   const [stats, setStats] = useState<StatsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [timeRange, setTimeRange] = useState<string>("all")
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    params.set("username", username)
+    const dateRange = getDateRange(timeRange)
+    if (dateRange.from) params.set("from", dateRange.from)
+    if (dateRange.to) params.set("to", dateRange.to)
+
     Promise.all([
-      fetch(`/api/promoter/dashboard?username=${encodeURIComponent(username)}`).then((r) => r.json()),
+      fetch(`/api/promoter/dashboard?${params.toString()}`).then((r) => r.json()),
       fetch(`/api/promoter/stats?username=${encodeURIComponent(username)}`).then((r) => r.json()),
     ])
       .then(([dash, stat]) => {
@@ -49,7 +101,11 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [username])
+  }, [username, timeRange])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   if (loading) {
     return (
@@ -73,7 +129,7 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
       title: "Total Clicks",
       value: dashboard?.total_clicks ?? 0,
       icon: MousePointerClick,
-      description: "All time clicks",
+      description: timeRange === "all" ? "All time clicks" : `Clicks in selected range`,
     },
     {
       title: "Products",
@@ -93,20 +149,34 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
         ? `+${dashboard.trend_data[dashboard.trend_data.length - 1]?.count ?? 0}`
         : "0",
       icon: TrendingUp,
-      description: "Clicks today",
+      description: "Latest period clicks",
     },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
-        <Link
-          href={`/promoter/products/${username}`}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-        >
-          + Add Products
-        </Link>
+        <div className="flex items-center gap-3">
+          <Select value={timeRange} onValueChange={(v) => setTimeRange(v || "all")}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Time range" />
+            </SelectTrigger>
+            <SelectContent>
+              {timeRanges.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Link
+            href={`/promoter/products/${username}`}
+            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            + Add Products
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -158,7 +228,11 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
                           : click.event_type}
                     </p>
                     <p className="text-xs text-zinc-400">
-                      {click.product_id ? `Product: ${click.product_id.slice(0, 8)}...` : "Direct"}
+                      {click.product_title
+                        ? click.product_title
+                        : click.product_id
+                          ? `Product: ${click.product_id.slice(0, 8)}...`
+                          : "Direct"}
                     </p>
                   </div>
                   <span className="text-xs text-zinc-400">

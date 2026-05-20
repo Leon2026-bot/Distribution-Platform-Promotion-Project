@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
 interface AdminStats {
   total_products: number
@@ -252,22 +253,17 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             {stats?.trend_data && stats.trend_data.length > 0 ? (
-              <div className="space-y-2">
-                {stats.trend_data.map((d) => (
-                  <div key={d.date} className="flex items-center gap-3">
-                    <span className="w-24 text-xs text-zinc-500">{d.date}</span>
-                    <div className="flex-1">
-                      <div
-                        className="h-4 rounded bg-zinc-900"
-                        style={{
-                          width: `${Math.min(100, (d.count / Math.max(...stats.trend_data.map((t) => t.count))) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-xs font-medium">{d.count}</span>
-                  </div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.trend_data}>
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#a1a1aa" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="#a1a1aa" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#fff", border: "1px solid #e4e4e7", borderRadius: "8px" }}
+                    labelStyle={{ color: "#27272a" }}
+                  />
+                  <Bar dataKey="count" fill="#18181b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             ) : (
               <p className="py-8 text-center text-sm text-zinc-400">No click data for selected range.</p>
             )}

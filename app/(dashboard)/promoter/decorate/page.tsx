@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { User } from "lucide-react"
 import toast from "react-hot-toast"
 
 interface ShopConfig {
@@ -155,17 +156,79 @@ export default function DecoratePage() {
 
         {/* Preview */}
         <div className="space-y-2">
-          <Label>Preview</Label>
-          <div
-            className="rounded-xl px-6 py-8 text-center"
-            style={{ backgroundColor: config.banner_color }}
-          >
-            <h2 className="text-lg font-bold text-zinc-900">
-              {config.banner_text || "Your Banner Text"}
-            </h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              {config.banner_subtitle || "Your banner subtitle"}
-            </p>
+          <Label className="flex items-center gap-2">
+            Preview
+            <span className="text-xs font-normal text-zinc-400">(scroll to see more)</span>
+          </Label>
+          <div className="max-h-[500px] overflow-y-auto rounded-xl border border-zinc-200 bg-white">
+            {/* Banner */}
+            <div
+              className="px-6 py-10 text-center"
+              style={{ backgroundColor: config.banner_color }}
+            >
+              <h2 className="text-xl font-bold text-zinc-900 sm:text-2xl">
+                {config.banner_text || "Your Banner Text"}
+              </h2>
+              <p className="mt-1 text-sm text-zinc-600">
+                {config.banner_subtitle || "Your banner subtitle"}
+              </p>
+            </div>
+
+            {/* Shop Owner Info */}
+            <div className="border-b border-zinc-100 bg-white px-6 py-6 text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-zinc-100">
+                {config.display_name ? (
+                  <span className="text-lg font-bold text-zinc-600">
+                    {config.display_name.charAt(0).toUpperCase()}
+                  </span>
+                ) : (
+                  <User className="size-6 text-zinc-400" />
+                )}
+              </div>
+              <h3 className="mt-3 text-sm font-semibold text-zinc-900">
+                {config.display_name || "Your Name"}&apos;s Shop
+              </h3>
+              {config.bio && (
+                <p className="mx-auto mt-1 max-w-xs text-xs text-zinc-500">
+                  {config.bio}
+                </p>
+              )}
+            </div>
+
+            {/* Product Grid Skeleton */}
+            <div className="px-4 py-6 sm:px-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-zinc-900">
+                  Curated Products
+                </h4>
+                <span className="text-xs text-zinc-400">View All →</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="overflow-hidden rounded-lg border border-zinc-100">
+                    {/* Image placeholder */}
+                    <div className="aspect-square bg-zinc-100" />
+                    {/* Text placeholders */}
+                    <div className="p-2 space-y-1.5">
+                      <div className="h-3 w-3/4 rounded bg-zinc-100" />
+                      <div className="h-3 w-1/2 rounded bg-zinc-100" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA placeholder */}
+            <div className="px-4 pb-6 sm:px-6">
+              <div className="rounded-xl bg-zinc-900 px-6 py-6 text-center">
+                <p className="text-sm font-semibold text-white">
+                  Want to start your own shop?
+                </p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Join as a promoter and earn commissions.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
