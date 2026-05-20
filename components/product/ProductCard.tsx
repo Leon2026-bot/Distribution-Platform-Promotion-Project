@@ -11,6 +11,8 @@ interface ProductCardProps {
   product: ProductRow & {
     brand_name?: string
     platform_count?: number
+    platform_name?: string
+    platform_logo_url?: string
   }
   sort?: string
   refParam?: string
@@ -109,6 +111,17 @@ export function ProductCard({ product, sort, refParam }: ProductCardProps) {
           <p className="mt-1 text-xs text-zinc-400">
             {product.platform_count} platforms available
           </p>
+        ) : product.platform_name ? (
+          <div className="mt-1 flex items-center gap-1">
+            {product.platform_logo_url ? (
+              <img
+                src={product.platform_logo_url.startsWith("http") ? product.platform_logo_url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brands/${product.platform_logo_url}`}
+                alt={product.platform_name}
+                className="size-3 object-contain"
+              />
+            ) : null}
+            <span className="text-[10px] text-zinc-400">{product.platform_name}</span>
+          </div>
         ) : null}
       </div>
     </Link>

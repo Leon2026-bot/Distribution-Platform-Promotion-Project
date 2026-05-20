@@ -3,6 +3,7 @@ import { ArrowRight, Search, Shield, Truck, Repeat } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ProductCard } from "@/components/product/ProductCard"
+import { HeroSearch } from "@/components/search/HeroSearch"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
@@ -41,10 +42,10 @@ export default async function Home() {
       .order("product_count", { ascending: false })
       .limit(12),
 
-    // New Arrivals: 8 most recent
+    // New Arrivals: 8 most recent (with platform info)
     supabaseAdmin
       .from("products")
-      .select("*")
+      .select("*, agent_platforms:platform_id(id, name, slug, logo_url)")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(8),
@@ -86,7 +87,11 @@ export default async function Home() {
       .eq("status", "active"),
   ])
 
-  const activeProducts = newProducts || []
+  const activeProducts = (newProducts || []).map((p: any) => ({
+    ...p,
+    platform_name: p.agent_platforms?.name ?? null,
+    platform_logo_url: p.agent_platforms?.logo_url ?? null,
+  }))
   const totalProducts = productCountResult?.count ?? 0
   const totalBrands = brandCountResult?.count ?? 0
 
@@ -109,22 +114,12 @@ export default async function Home() {
             </p>
 
             {/* Search Bar */}
-            <form
-              action="/products"
-              className="mx-auto mt-8 flex max-w-lg items-center gap-2"
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
-                <Input
-                  name="q"
-                  type="search"
-                  placeholder="Search sneakers, bags, electronics..."
-                  className="h-11 pl-9 text-sm"
-                />
-              </div>
-              <Button type="submit" size="lg">
-                Search
-              </Button>
+            <form id="hero-search-form" action="/products" className="w-full">
+              <HeroSearch
+                placeholder="Search sneakers, bags, electronics..."
+                action="/products"
+                hotKeywords={["Sneakers", "Bags", "Jordan", "Nike"]}
+              />
             </form>
 
             {/* Trust Bar */}
@@ -200,9 +195,9 @@ export default async function Home() {
                       {brand.name}
                     </p>
                     {brand.product_count ? (
-                      <p className="text-xs text-zinc-400">
-                        {brand.product_count} products
-                      </p>
+                      <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                        {brand.product_count.toLocaleString()} products
+                      </span>
                     ) : null}
                   </div>
                 </Link>

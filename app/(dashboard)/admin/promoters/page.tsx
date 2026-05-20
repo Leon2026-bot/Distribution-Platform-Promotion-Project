@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Pencil, Ban, CheckCircle, Eye, MousePointerClick, Package, Globe } from "lucide-react"
+import { Pencil, Ban, CheckCircle, Eye, MousePointerClick, Package, Globe, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -40,6 +48,8 @@ const defaultPermissions = {
 export default function AdminPromotersPage() {
   const [promoters, setPromoters] = useState<Promoter[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
 
   const fetchPromoters = () => {
     fetch("/api/admin/promoters")
@@ -79,13 +89,47 @@ export default function AdminPromotersPage() {
     }
   }
 
+  // Client-side filtering
+  const filteredPromoters = promoters.filter((p) => {
+    const matchesSearch =
+      !searchQuery ||
+      p.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesStatus =
+      statusFilter === "all" || p.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-900">Promoters</h1>
         <p className="text-sm text-zinc-500">
-          Total: {promoters.length}
+          Showing {filteredPromoters.length} of {promoters.length}
         </p>
+      </div>
+
+      {/* Search & Filter */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <Input
+            placeholder="Search by username or name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "all")}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border border-zinc-200 bg-white">
@@ -108,14 +152,14 @@ export default function AdminPromotersPage() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : promoters.length === 0 ? (
+            ) : filteredPromoters.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-sm text-zinc-400">
-                  No promoters yet.
+                <TableCell colSpan={5} className="py-8 text-center text-sm text-zinc-400">
+                  {searchQuery || statusFilter !== "all" ? "No promoters match your filters." : "No promoters yet."}
                 </TableCell>
               </TableRow>
             ) : (
-              promoters.map((p) => (
+              filteredPromoters.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

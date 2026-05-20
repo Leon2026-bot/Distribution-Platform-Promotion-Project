@@ -151,23 +151,28 @@ export default function LinksPage() {
     }
   }
 
-  const showQr = (url: string) => {
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`
-    setQrUrl(qrApiUrl)
-    setShowQrDialog(true)
+  const showQr = async (url: string) => {
+    try {
+      const QRCode = await import("qrcode")
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 200,
+        margin: 2,
+        color: { dark: "#18181b", light: "#ffffff" },
+      })
+      setQrUrl(dataUrl)
+      setShowQrDialog(true)
+    } catch {
+      toast.error("Failed to generate QR code")
+    }
   }
 
   const downloadQr = async () => {
     if (!qrUrl) return
     try {
-      const res = await fetch(qrUrl)
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
-      a.href = url
+      a.href = qrUrl
       a.download = `qr-code-${Date.now()}.png`
       a.click()
-      URL.revokeObjectURL(url)
       toast.success("QR code downloaded")
     } catch {
       toast.error("Download failed")

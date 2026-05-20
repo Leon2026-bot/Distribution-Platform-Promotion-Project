@@ -75,11 +75,11 @@ export default async function AdminLayout({
         <div className="border-t border-zinc-100 p-3">
           <div className="flex items-center gap-2 rounded-lg px-3 py-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
-              A
+              {(user.user_metadata?.display_name || user.email || "A").charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 truncate">
               <p className="text-sm font-medium text-zinc-900">
-                {user.email}
+                {user.user_metadata?.display_name || user.email?.split("@")[0] || "Admin"}
               </p>
               <p className="text-xs text-zinc-400">Super Admin</p>
             </div>

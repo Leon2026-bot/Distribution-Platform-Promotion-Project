@@ -148,19 +148,19 @@ export default function AdminDashboardPage() {
       title: "Products",
       value: stats?.total_products ?? 0,
       icon: Package,
-      description: "Total in database",
+      description: "Total active (all time)",
     },
     {
       title: "Promoters",
       value: stats?.total_promoters ?? 0,
       icon: Users,
-      description: "Registered promoters",
+      description: "Total registered (all time)",
     },
     {
       title: "Clicks",
       value: stats?.total_clicks ?? 0,
       icon: MousePointerClick,
-      description: "Filtered clicks",
+      description: timeRange === "all" ? "All time clicks" : "Filtered by time range",
     },
     {
       title: "Platforms",
@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
       title: "Blog Posts",
       value: stats?.total_blog_posts ?? 0,
       icon: FileText,
-      description: "Published articles",
+      description: "Published articles (all time)",
     },
   ]
 

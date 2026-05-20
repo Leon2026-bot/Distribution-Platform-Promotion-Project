@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
   const from = searchParams.get("from")
   const to = searchParams.get("to")
 
+  // ── Current period clicks ──
   let query = serviceClient
     .from("click_events")
     .select("*")
@@ -59,6 +60,24 @@ export async function GET(request: NextRequest) {
   }
 
   const clickList = clicks ?? []
+
+  // ── Previous period clicks (for trend comparison) ──
+  let prevTotalClicks = 0
+  if (from && to) {
+    const fromDate = new Date(from)
+    const toDate = new Date(to)
+    const diffMs = toDate.getTime() - fromDate.getTime()
+    const prevFrom = new Date(fromDate.getTime() - diffMs).toISOString().split("T")[0]
+    const prevTo = new Date(fromDate.getTime() - 1).toISOString().split("T")[0]
+
+    const { count } = await serviceClient
+      .from("click_events")
+      .select("id", { count: "exact", head: true })
+      .eq("promoter_id", promoterId)
+      .gte("created_at", prevFrom)
+      .lte("created_at", prevTo)
+    prevTotalClicks = count ?? 0
+  }
 
   // Total clicks
   const totalClicks = clickList.length
@@ -130,6 +149,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     total_clicks: totalClicks,
+    prev_total_clicks: prevTotalClicks,
     trend_data: trendData,
     top_products: topProducts,
     click_details: clickDetails,

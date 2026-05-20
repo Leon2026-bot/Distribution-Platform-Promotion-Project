@@ -43,14 +43,14 @@ interface PromoterDetail {
   }>
 }
 
-const permissionLabels: Record<string, string> = {
-  dashboard: "Dashboard",
-  products: "Products",
-  my_products: "My Products",
-  custom: "Custom",
-  links: "Links",
-  settings: "Settings",
-  decorate: "Decorate",
+const permissionLabels: Record<string, { label: string; desc: string }> = {
+  dashboard: { label: "Dashboard", desc: "View analytics dashboard" },
+  products: { label: "Products", desc: "Browse & add products" },
+  my_products: { label: "My Products", desc: "Manage curated products" },
+  custom: { label: "Custom", desc: "Custom product settings" },
+  links: { label: "Promote Links", desc: "Generate & share referral links" },
+  settings: { label: "Settings", desc: "Account settings" },
+  decorate: { label: "Shop Decorate", desc: "Customize shop appearance" },
 }
 
 export default function PromoterDetailPage() {
@@ -284,14 +284,17 @@ export default function PromoterDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(permissionLabels).map(([key, label]) => (
+              {Object.entries(permissionLabels).map(([key, { label, desc }]) => (
                 <div
                   key={key}
                   className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-3"
                 >
-                  <span className="text-sm font-medium text-zinc-700">
-                    {label}
-                  </span>
+                  <div>
+                    <span className="text-sm font-medium text-zinc-700">
+                      {label}
+                    </span>
+                    <p className="text-xs text-zinc-400">{desc}</p>
+                  </div>
                   <Switch
                     checked={promoter.permissions?.[key] ?? true}
                     onCheckedChange={(v) => updatePermissions(key, v)}

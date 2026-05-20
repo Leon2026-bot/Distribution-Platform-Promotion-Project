@@ -7,6 +7,8 @@ import {
   Package,
   Link as LinkIcon,
   TrendingUp,
+  TrendingDown,
+  Minus,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -16,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { AreaChart, Area, ResponsiveContainer } from "recharts"
 
 interface DashboardData {
   total_clicks: number
+  prev_total_clicks: number
   trend_data: Array<{ date: string; count: number }>
   top_products: Array<{ id: string; title: string; clicks: number }>
   click_details: Array<{
@@ -77,6 +81,25 @@ function getDateRange(value: string): { from?: string; to?: string } {
   }
 }
 
+function TrendBadge({ current, previous }: { current: number; previous: number }) {
+  if (previous === 0) return null
+  const pct = ((current - previous) / previous) * 100
+  if (Math.abs(pct) < 0.5) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] text-zinc-400">
+        <Minus className="size-3" /> 0%
+      </span>
+    )
+  }
+  const isUp = pct > 0
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] ${isUp ? "text-green-600" : "text-red-500"}`}>
+      {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+      {isUp ? "+" : ""}{pct.toFixed(0)}%
+    </span>
+  )
+}
+
 export function PromoterDashboard({ username }: PromoterDashboardProps) {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
   const [stats, setStats] = useState<StatsData | null>(null)
@@ -124,12 +147,21 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
     )
   }
 
-  const statCards = [
+  const statCards: Array<{
+    title: string
+    value: number | string
+    icon: any
+    description: string
+    trend?: React.ReactNode
+  }> = [
     {
       title: "Total Clicks",
       value: dashboard?.total_clicks ?? 0,
       icon: MousePointerClick,
       description: timeRange === "all" ? "All time clicks" : `Clicks in selected range`,
+      trend: timeRange !== "all" ? (
+        <TrendBadge current={dashboard?.total_clicks ?? 0} previous={dashboard?.prev_total_clicks ?? 0} />
+      ) : null,
     },
     {
       title: "Products",
@@ -195,6 +227,7 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
                     <p className="mt-0.5 text-xs text-zinc-400">
                       {card.description}
                     </p>
+                    {card.trend && <div className="mt-0.5">{card.trend}</div>}
                   </div>
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100">
                     <Icon className="size-5 text-zinc-600" />
@@ -205,6 +238,37 @@ export function PromoterDashboard({ username }: PromoterDashboardProps) {
           )
         })}
       </div>
+
+      {/* Click Trend Sparkline */}
+      {dashboard?.trend_data && dashboard.trend_data.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="size-4" />
+              Click Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={120}>
+              <AreaChart data={dashboard.trend_data}>
+                <defs>
+                  <linearGradient id="clickGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#18181b" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#18181b" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#18181b"
+                  strokeWidth={2}
+                  fill="url(#clickGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Click Details */}
       <Card>

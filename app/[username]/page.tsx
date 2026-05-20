@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { ArrowRight, Search } from "lucide-react"
+import { ArrowRight, Search, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ProductCard } from "@/components/product/ProductCard"
+import { PromoterProductsGrid } from "@/components/product/PromoterProductsGrid"
 import { SchemaBreadcrumb } from "@/components/seo/SchemaBreadcrumb"
 import { supabaseAdmin } from "@/lib/supabase/admin"
 
@@ -17,7 +18,7 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
   // ── Fetch promoter info ───────────────────────────────────────────
   const { data: promoter } = await supabaseAdmin
     .from("promoters")
-    .select("id, username, display_name, bio, is_active")
+    .select("id, username, display_name, bio, is_active, created_at, avatar_url, social_links")
     .eq("username", username)
     .single()
 
@@ -30,6 +31,7 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
     { data: promoterProducts },
     { data: channels },
     { data: platforms },
+    { count: totalClicks },
   ] = await Promise.all([
     // Promoter's selected products
     supabaseAdmin
@@ -53,6 +55,12 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
       .select("id, name, slug, logo_url, website_url")
       .eq("is_active", true)
       .order("display_order", { ascending: true }),
+
+    // Total clicks for this promoter
+    supabaseAdmin
+      .from("click_events")
+      .select("id", { count: "exact", head: true })
+      .eq("promoter_id", promoter.id),
   ])
 
   // Build platform lookup
@@ -67,7 +75,7 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
   const products =
     promoterProducts
       ?.map((pp) => pp.products)
-      .filter(Boolean) ?? []
+      .filter((p): p is NonNullable<typeof p> => p !== null) ?? []
 
   return (
     <>
@@ -82,6 +90,21 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
         {/* Promoter Hero */}
         <section className="bg-gradient-to-b from-zinc-50 to-white">
           <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
+            {/* Avatar */}
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-zinc-100 ring-4 ring-white shadow-lg">
+              {promoter.avatar_url ? (
+                <img
+                  src={promoter.avatar_url.startsWith("http") ? promoter.avatar_url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${promoter.avatar_url}`}
+                  alt={promoter.display_name || promoter.username}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-zinc-400">
+                  {(promoter.display_name || promoter.username).charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+
             <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl lg:text-5xl">
               {promoter.display_name || promoter.username}&apos;s Shop
             </h1>
@@ -109,6 +132,46 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
                 Search
               </Button>
             </form>
+
+            {/* Social Proof Stats */}
+            <div className="mx-auto mt-5 flex items-center justify-center gap-6 text-sm">
+              <div className="text-center">
+                <p className="text-lg font-bold text-zinc-900">{products.length}</p>
+                <p className="text-xs text-zinc-400">Products</p>
+              </div>
+              <div className="h-6 w-px bg-zinc-200" />
+              <div className="text-center">
+                <p className="text-lg font-bold text-zinc-900">{totalClicks ?? 0}</p>
+                <p className="text-xs text-zinc-400">Clicks</p>
+              </div>
+              <div className="h-6 w-px bg-zinc-200" />
+              <div className="text-center">
+                <p className="text-lg font-bold text-zinc-900">
+                  {promoter.created_at
+                    ? new Date(promoter.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+                    : "—"}
+                </p>
+                <p className="text-xs text-zinc-400">Joined</p>
+              </div>
+            </div>
+
+            {/* Social Links */}
+            {(promoter.social_links as Record<string, string>) && Object.keys(promoter.social_links as Record<string, string> || {}).length > 0 && (
+              <div className="mx-auto mt-4 flex items-center justify-center gap-3">
+                {Object.entries(promoter.social_links as Record<string, string>).map(([platform, url]) => (
+                  <a
+                    key={platform}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600"
+                  >
+                    <ExternalLink className="size-3" />
+                    {platform}
+                  </a>
+                ))}
+              </div>
+            )}
 
             {/* Active Agents */}
             {activePlatforms.length > 0 && (
@@ -145,22 +208,11 @@ export default async function PromoterPage({ params }: PromoterPageProps) {
               <h2 className="text-lg font-semibold text-zinc-900">
                 Curated Products
               </h2>
-              <Link href={`/${username}/products`}>
-                <Button variant="ghost" size="sm">
-                  View All
-                  <ArrowRight className="ml-1 size-3.5" />
-                </Button>
-              </Link>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {products.map((product: any) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  refParam={`ref=${username}`}
-                />
-              ))}
-            </div>
+            <PromoterProductsGrid
+              products={products}
+              username={username}
+            />
           </section>
         ) : (
           <section className="mx-auto w-full max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
