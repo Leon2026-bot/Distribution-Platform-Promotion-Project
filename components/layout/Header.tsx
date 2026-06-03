@@ -55,13 +55,13 @@ export function Header() {
   const isPromoterShop = pathSegments.length >= 1 && !knownRoutes.includes(firstSegment)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-zinc-800/60 bg-[#0d1117]/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-lg font-bold tracking-tight text-zinc-900">
+          <span className="text-lg font-bold tracking-tight text-white">
             {isDashboard ? "Promotion" : "Finds"}
-            <span className="text-zinc-400">{isDashboard ? " Dashboard" : " Engine"}</span>
+            <span className="text-orange-400">{isDashboard ? " Dashboard" : " Engine"}</span>
           </span>
         </Link>
 
@@ -72,10 +72,10 @@ export function Header() {
               link.children ? (
                 <DropdownMenu key={link.label}>
                   <DropdownMenuTrigger
-                    className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 ${
+                    className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-white ${
                       pathname.startsWith(link.href)
-                        ? "text-zinc-900"
-                        : "text-zinc-600"
+                        ? "text-white"
+                        : "text-zinc-400"
                     }`}
                   >
                     {link.label}
@@ -95,10 +95,10 @@ export function Header() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 hover:text-zinc-900 ${
+                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-white ${
                     pathname === link.href
-                      ? "text-zinc-900"
-                      : "text-zinc-600"
+                      ? "text-white"
+                      : "text-zinc-400"
                   }`}
                 >
                   {link.label}
@@ -113,19 +113,19 @@ export function Header() {
           {!isDashboard && (
             <>
               <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
                 <Input
                   type="search"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-8 w-96 pl-8 text-sm"
+                  className="h-8 w-80 border-zinc-700/60 bg-white/5 pl-8 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-orange-500/50"
                 />
               </form>
 
               {/* Currency Switcher */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900">
+                <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white">
                   <span className="text-sm font-medium">{symbol}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[120px]">
@@ -143,13 +143,13 @@ export function Header() {
 
               {!isPromoterShop && (
                 <Link href="/login">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white hover:bg-white/5">
                     Sign In
                   </Button>
                 </Link>
               )}
               <Link href="/register">
-                <Button size="sm">Register</Button>
+                <Button size="sm" className="bg-orange-500 text-white hover:bg-orange-600">Register</Button>
               </Link>
             </>
           )}
@@ -192,10 +192,10 @@ export function Header() {
             className="fixed inset-0 bg-black/20 backdrop-blur-xs"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-lg font-bold text-zinc-900">
-                Finds<span className="text-zinc-400"> Engine</span>
+          <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-[#0d1117] shadow-xl border-l border-zinc-800">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <span className="text-lg font-bold text-white">
+                Finds<span className="text-orange-400"> Engine</span>
               </span>
               <Button
                 variant="ghost"
@@ -208,13 +208,13 @@ export function Header() {
             <div className="px-4 py-3">
               <form onSubmit={handleSearch}>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+                  <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
                   <Input
                     type="search"
                     placeholder="Search products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8"
+                    className="border-zinc-700 bg-white/5 pl-8 text-zinc-200 placeholder:text-zinc-500"
                   />
                 </div>
               </form>
@@ -226,7 +226,7 @@ export function Header() {
                     <Link
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                      className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -235,7 +235,7 @@ export function Header() {
                         key={child.href}
                         href={child.href}
                         onClick={() => setMobileOpen(false)}
-                        className="block rounded-md px-6 py-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+                        className="block rounded-md px-6 py-2 text-sm text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
                       >
                         {child.label}
                       </Link>
@@ -246,35 +246,35 @@ export function Header() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`block rounded-md px-3 py-2.5 text-sm font-medium hover:bg-zinc-100 ${
+                    className={`block rounded-md px-3 py-2.5 text-sm font-medium hover:bg-white/5 ${
                       pathname === link.href
-                        ? "text-zinc-900"
-                        : "text-zinc-700"
+                        ? "text-white"
+                        : "text-zinc-400"
                     }`}
                   >
                     {link.label}
                   </Link>
                 )
               )}
-              <div className="my-2 h-px bg-zinc-100" />
+              <div className="my-2 h-px bg-zinc-800" />
               <Link
                 href="/promoter/register"
                 onClick={() => setMobileOpen(false)}
-                className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+                className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
               >
                 For Promoters
               </Link>
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+                className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-white/5 hover:text-white"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMobileOpen(false)}
-                className="block rounded-md px-3 py-2.5 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
+                className="mt-2 block rounded-md bg-orange-500 px-3 py-2.5 text-center text-sm font-bold text-white hover:bg-orange-600"
               >
                 Register
               </Link>

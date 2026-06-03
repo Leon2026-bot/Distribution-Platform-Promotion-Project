@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
 interface IngestItem {
   source_type: string
@@ -31,19 +33,48 @@ interface IngestItem {
  * Auth: Bearer token via INGEST_SECRET_TOKEN env var
  */
 export async function POST(request: NextRequest) {
-  // ── Auth ────────────────────────────────────────────────────────────
+  // ── Auth: 优先支持管理员 session cookie，兼容 Bearer token ────────────
   const authHeader = request.headers.get("authorization")
   const token = authHeader?.replace("Bearer ", "")
   const expectedToken = process.env.INGEST_SECRET_TOKEN
 
-  if (!expectedToken) {
-    return NextResponse.json(
-      { error: "INGEST_SECRET_TOKEN not configured" },
-      { status: 500 }
-    )
+  let isAuthorized = false
+
+  // 方式1: Bearer token（外部脚本调用）
+  if (expectedToken && token === expectedToken) {
+    isAuthorized = true
   }
 
-  if (token !== expectedToken) {
+  // 方式2: 管理员 session cookie（管理后台调用）
+  if (!isAuthorized) {
+    try {
+      const cookieStore = await cookies()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() { return cookieStore.getAll() },
+            setAll() {},
+          },
+        }
+      )
+      const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          // 管理员判断：user_metadata 或 app_metadata 中有 super_admin role
+          const isAdmin =
+            user.user_metadata?.role === "super_admin" ||
+            user.app_metadata?.role === "super_admin"
+          if (isAdmin) {
+            isAuthorized = true
+          }
+        }
+    } catch {
+      // cookie 鉴权失败，继续尝试下一种方式
+    }
+  }
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -91,8 +122,8 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      if (!["taobao", "1688", "weidian", "manual"].includes(item.source_type)) {
-        detail.error = "source_type must be one of: taobao, 1688, weidian, manual"
+      if (!["taobao", "1688", "weidian", "manual", "kakobuy", "cnfans", "fishgoo", "superbuy", "ownpanda", "acbuy", "mulebuy", "allchinabuy", "itaobuy", "usfans", "hipobuy", "litbuy", "sugargoo", "hoobuy", "oopbuy"].includes(item.source_type)) {
+        detail.error = `Invalid source_type: "${item.source_type}". Supported: kakobuy, cnfans, fishgoo, superbuy, ownpanda, acbuy, mulebuy, allchinabuy, taobao, 1688, weidian, manual, etc.`
         results.errors++
         results.details.push(detail)
         continue

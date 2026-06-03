@@ -341,7 +341,7 @@ export default function RegisterPage() {
           </p>
           <Button
             className="w-full"
-            onClick={() => router.push("/promoter/dashboard")}
+            onClick={() => router.push(`/promoter/dashboard/${username}`)}
           >
             Go to Dashboard
           </Button>
